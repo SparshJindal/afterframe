@@ -1,8 +1,11 @@
 import http from 'node:http';import fs from 'node:fs/promises';import path from 'node:path';import vm from 'node:vm';import {fileURLToPath} from 'node:url';import {randomUUID,randomBytes,createHash} from 'node:crypto';import pg from 'pg';import {validateRating,craftScore,fitTaste,latestDistinct,modelAspectIds} from './model.mjs';import {importCatalogue} from './catalogue/import.mjs';import {buildFilmIndex,earlyRecommendations} from './public/recommend.js';
 const root=path.dirname(fileURLToPath(import.meta.url));const isProd=process.env.NODE_ENV==='production';
 if(!process.env.DATABASE_URL)throw Error('DATABASE_URL is required. Use npm run dev for a local real PostgreSQL instance.');
-const sslConfig=process.env.PGSSL==='true'?{rejectUnauthorized:true}:(process.env.DATABASE_URL.includes('sslmode=')||(isProd&&!process.env.DATABASE_URL.includes('localhost')))?{rejectUnauthorized:false}:undefined;
-const pool=new pg.Pool({connectionString:process.env.DATABASE_URL,max:10,ssl:sslConfig});
+const rawDbUrl=process.env.DATABASE_URL;
+const isCloudDb=rawDbUrl.includes('neon.tech')||rawDbUrl.includes('supabase.co')||rawDbUrl.includes('amazonaws.com')||rawDbUrl.includes('sslmode=')||(isProd&&!rawDbUrl.includes('localhost'));
+const cleanDbUrl=rawDbUrl.replace(/[?&]sslmode=[^&]+/g,'').replace(/[?&]channel_binding=[^&]+/g,'');
+const sslConfig=process.env.PGSSL==='true'?{rejectUnauthorized:true}:isCloudDb?{rejectUnauthorized:false}:undefined;
+const pool=new pg.Pool({connectionString:cleanDbUrl,max:isProd?3:10,ssl:sslConfig,connectionTimeoutMillis:10000});
 await pool.query(await fs.readFile(path.join(root,'db/schema.sql'),'utf8'));
 const context={window:{}};vm.createContext(context);vm.runInContext(await fs.readFile(path.join(root,'public/data.js'),'utf8'),context);const {MOVIES,ASPECTS}=context.window;
 for(const m of MOVIES)await pool.query('INSERT INTO movies(id,title,year,director,genres,runtime,poster,wallpaper) VALUES($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT(id) DO UPDATE SET wallpaper=excluded.wallpaper,poster=excluded.poster',[m.id,m.title,m.year,m.director,JSON.stringify(m.genres),m.runtime,m.poster,m.wallpaper||'']);
@@ -37,7 +40,7 @@ export async function handleRequest(req,res){res.setHeader('X-Content-Type-Optio
   return send(res,404,{error:'Endpoint not found.'});
  }
  if(req.method!=='GET')return send(res,405,{error:'Method not allowed.'});let rel=decodeURIComponent(url.pathname);if(rel==='/')rel='/index.html';const full=path.resolve(root,'public','.'+rel);if(!full.startsWith(path.join(root,'public')+path.sep))return send(res,403,{error:'Forbidden.'});const ext=path.extname(full);const content=await fs.readFile(full);res.writeHead(200,{'Content-Type':({'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.jpg':'image/jpeg','.png':'image/png','.svg':'image/svg+xml'}[ext]||'application/octet-stream'),'Cache-Control':'no-cache'});res.end(content);
- }catch(e){const status=e.code==='ENOENT'?404:e.status||400;if(!e.code&&!e.status)console.error(e.message);if(e.code&&e.code!=='ENOENT')return send(res,500,{error:'Storage could not complete this request. Your answers have not been marked as saved.'});send(res,status,{error:e.code==='ENOENT'?'Not found.':e.message});}
+ }catch(e){console.error('Request error:',e);const status=e.code==='ENOENT'?404:e.status||400;if(e.code&&e.code!=='ENOENT')return send(res,500,{error:`Storage could not complete this request: ${e.message}`});send(res,status,{error:e.code==='ENOENT'?'Not found.':e.message});}
 }
 export default handleRequest;
 export const server=http.createServer(handleRequest);
