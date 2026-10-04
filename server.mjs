@@ -1,47 +1,60 @@
 import http from 'node:http';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { randomUUID, randomBytes, createHash } from 'node:crypto';
 import pg from 'pg';
 import { validateRating, craftScore, fitTaste, latestDistinct, modelAspectIds } from './model.mjs';
 import { importCatalogue } from './catalogue/import.mjs';
-import { catalogueMeta } from './catalogue/source.mjs';
-import { schemaSQL } from './db/schema.mjs';
-import { MOVIES, ASPECTS } from './data.mjs';
 import { buildFilmIndex, earlyRecommendations } from './public/recommend.js';
+import { createAuth, AuthError } from './server/auth.mjs';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const isProd = process.env.NODE_ENV === 'production';
 
 let pool = null;
-function getPool() {
+export function getPool() {
   if (!pool) {
-    if (!process.env.DATABASE_URL) {
-      throw Error('DATABASE_URL is required. Configure your PostgreSQL connection string.');
-    }
+    if (!process.env.DATABASE_URL) throw Error('DATABASE_URL is required. Use npm run dev for a local real PostgreSQL instance.');
     const rawDbUrl = process.env.DATABASE_URL;
     const isCloudDb = rawDbUrl.includes('neon.tech') || rawDbUrl.includes('supabase.co') || rawDbUrl.includes('amazonaws.com') || rawDbUrl.includes('sslmode=') || (isProd && !rawDbUrl.includes('localhost'));
     const cleanDbUrl = rawDbUrl.replace(/[?&]sslmode=[^&]+/g, '').replace(/[?&]channel_binding=[^&]+/g, '');
     const sslConfig = process.env.PGSSL === 'true' ? { rejectUnauthorized: true } : isCloudDb ? { rejectUnauthorized: false } : undefined;
-    pool = new pg.Pool({ connectionString: cleanDbUrl, max: isProd ? 3 : 10, ssl: sslConfig, connectionTimeoutMillis: 10000 });
+    pool = new pg.Pool({ connectionString: cleanDbUrl, max: isProd ? 5 : 10, ssl: sslConfig, connectionTimeoutMillis: 10000 });
   }
   return pool;
 }
 
 let initPromise = null;
-async function ensureInit() {
+let auth = null;
+let catalogueMeta = null;
+
+export async function ensureInit() {
   if (!initPromise) {
     initPromise = (async () => {
       const p = getPool();
-      await p.query(schemaSQL);
-      for (const m of MOVIES) {
-        await p.query('INSERT INTO movies(id,title,year,director,genres,runtime,poster,wallpaper) VALUES($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT(id) DO UPDATE SET wallpaper=excluded.wallpaper,poster=excluded.poster', [m.id, m.title, m.year, m.director, JSON.stringify(m.genres), m.runtime, m.poster, m.wallpaper || '']);
+      const runMigrations = !isProd || process.env.RUN_MIGRATIONS === 'true';
+      if (runMigrations) {
+        await p.query(await fs.readFile(path.join(root, 'db/schema.sql'), 'utf8'));
       }
-      for (const a of ASPECTS) {
-        await p.query('INSERT INTO question_versions(version,aspect_id,label,prompt) VALUES(1,$1,$2,$3) ON CONFLICT DO NOTHING', [a.id, a.name, a.question]);
+      const context = { window: {} };
+      vm.createContext(context);
+      vm.runInContext(await fs.readFile(path.join(root, 'public/data.js'), 'utf8'), context);
+      const { MOVIES, ASPECTS } = context.window;
+      if (runMigrations) {
+        for (const m of MOVIES) {
+          await p.query('INSERT INTO movies(id,title,year,director,genres,runtime,poster) VALUES($1,$2,$3,$4,$5,$6,$7) ON CONFLICT(id) DO NOTHING', [m.id, m.title, m.year, m.director, JSON.stringify(m.genres), m.runtime, m.poster]);
+        }
+        for (const a of ASPECTS) {
+          await p.query('INSERT INTO question_versions(version,aspect_id,label,prompt) VALUES(1,$1,$2,$3) ON CONFLICT DO NOTHING', [a.id, a.name, a.question]);
+        }
       }
-      await importCatalogue(p, root);
+      catalogueMeta = runMigrations ? await importCatalogue(p, root) : (await p.query('SELECT metadata FROM catalogue_imports WHERE source=$1', ['MovieLens latest-small'])).rows[0]?.metadata;
+      if (!catalogueMeta) throw Error('Catalogue migration is required before starting this app.');
+
+      const appOrigin = process.env.APP_ORIGIN || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : `http://localhost:${process.env.PORT || 3000}`);
+      auth = await createAuth(p, { root, production: isProd, origin: appOrigin, runMigrations });
     })().catch(err => {
       console.error('Database initialization warning:', err.message);
       initPromise = null;
@@ -55,7 +68,7 @@ if (process.env.DATABASE_URL) {
   ensureInit().catch(() => {});
 }
 
-const movieSelect = `SELECT id,title,year,director,genres,runtime,poster,wallpaper,original_title AS "originalTitle",movielens_id AS "movielensId",imdb_id AS "imdbId",tmdb_id AS "tmdbId",tags,rating_count AS "ratingCount",rating_mean::float8 AS "ratingMean",source FROM movies`;
+const movieSelect = `SELECT id,title,year,director,genres,runtime,poster,original_title AS "originalTitle",movielens_id AS "movielensId",imdb_id AS "imdbId",tmdb_id AS "tmdbId",tags,rating_count AS "ratingCount",rating_mean::float8 AS "ratingMean",source FROM movies`;
 const hash = s => createHash('sha256').update(s).digest('hex');
 
 function send(res, status, obj) {
@@ -77,27 +90,7 @@ async function body(req) {
 }
 
 async function profile(req, res) {
-  const p = getPool();
-  const raw = (req.headers.cookie || '').split(';').map(s => s.trim()).find(s => s.startsWith('af_session='))?.slice(11);
-  if (raw && /^[a-f0-9]{64}$/.test(raw)) {
-    const r = await p.query('SELECT profile_id FROM sessions WHERE token_hash=$1 AND expires_at>now()', [hash(raw)]);
-    if (r.rowCount) return r.rows[0].profile_id;
-  }
-  const id = randomUUID(), token = randomBytes(32).toString('hex');
-  const client = await p.connect();
-  try {
-    await client.query('BEGIN');
-    await client.query('INSERT INTO profiles(id) VALUES($1)', [id]);
-    await client.query("INSERT INTO sessions(token_hash,profile_id,expires_at) VALUES($1,$2,now()+interval '365 days')", [hash(token), id]);
-    await client.query('COMMIT');
-  } catch (e) {
-    await client.query('ROLLBACK');
-    throw e;
-  } finally {
-    client.release();
-  }
-  res.setHeader('Set-Cookie', `af_session=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=31536000${isProd ? '; Secure' : ''}`);
-  return id;
+  return (await auth.requireAccount(req)).profile_id;
 }
 
 async function getRatings(id) {
@@ -110,14 +103,22 @@ const limiter = new Map();
 
 export async function handleRequest(req, res) {
   res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  if (isProd) res.setHeader('Strict-Transport-Security', 'max-age=31536000');
   res.setHeader('Referrer-Policy', 'no-referrer');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('Content-Security-Policy', "default-src 'self'; img-src 'self' data:; style-src 'self'; style-src-attr 'unsafe-inline'; script-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'");
+
   try {
     const url = new URL(req.url, 'http://localhost');
+    await ensureInit();
+    const p = getPool();
+
     if (url.pathname.startsWith('/api/')) {
       if (!['GET', 'POST', 'DELETE', 'PATCH'].includes(req.method)) return send(res, 405, { error: 'Method not allowed.' });
+      if (await auth.handle(req, res, url)) return;
       if (req.method !== 'GET') {
+        await auth.assertMutation(req);
         const origin = req.headers.origin;
         const proto = req.headers['x-forwarded-proto'] || 'http';
         const host = req.headers.host;
@@ -127,9 +128,6 @@ export async function handleRequest(req, res) {
         if (req.headers['sec-fetch-site'] === 'cross-site') return send(res, 403, { error: 'Cross-site request blocked.' });
         if (req.method !== 'DELETE' && !req.headers['content-type']?.startsWith('application/json')) return send(res, 415, { error: 'Send application/json.' });
       }
-
-      await ensureInit();
-      const p = getPool();
 
       if (url.pathname === '/api/health') {
         await p.query('SELECT 1');
@@ -170,7 +168,7 @@ export async function handleRequest(req, res) {
         const limit = Math.min(60, Math.max(1, Math.floor(Number(url.searchParams.get('limit'))) || 24));
         const offset = Math.max(0, Math.min(100000, Math.floor(Number(url.searchParams.get('offset'))) || 0));
         const pattern = '%' + q.replace(/[\\%_]/g, '\\$&') + '%';
-        const conditions = ` WHERE ($1='%%' OR title ILIKE $1 OR original_title ILIKE $1 OR director ILIKE $1 OR year::text ILIKE $1) AND ($2='' OR genres ? $2)`;
+        const conditions = ` WHERE ($1=%% OR title ILIKE $1 OR original_title ILIKE $1 OR director ILIKE $1 OR year::text ILIKE $1) AND ($2= OR genres ? $2)`;
         const count = await p.query('SELECT count(*)::integer AS total FROM movies' + conditions, [pattern, genre]);
         const found = await p.query(movieSelect + conditions + ' ORDER BY rating_count DESC,title LIMIT $3 OFFSET $4', [pattern, genre, limit, offset]);
         return send(res, 200, { movies: found.rows, total: count.rows[0].total, limit, offset });
@@ -191,9 +189,7 @@ export async function handleRequest(req, res) {
         try {
           await c.query('BEGIN');
           await c.query('INSERT INTO ratings(id,profile_id,movie_id,overall,watched_on,spoilers) VALUES($1,$2,$3,$4,$5,$6)', [rid, id, b.movieId, b.overall, b.watchedOn, b.spoilers]);
-          for (const a of b.answers) {
-            await c.query('INSERT INTO answers(rating_id,question_version,aspect_id,score,skip_reason,note) VALUES($1,1,$2,$3,$4,$5)', [rid, a.aspectId, a.score, a.skipReason || null, a.note]);
-          }
+          for (const a of b.answers) await c.query('INSERT INTO answers(rating_id,question_version,aspect_id,score,skip_reason,note) VALUES($1,1,$2,$3,$4,$5)', [rid, a.aspectId, a.score, a.skipReason || null, a.note]);
           await c.query('DELETE FROM watchlist WHERE profile_id=$1 AND movie_id=$2', [id, b.movieId]);
           await c.query('COMMIT');
         } catch (e) {
@@ -264,9 +260,11 @@ export async function handleRequest(req, res) {
       }
 
       if (req.method === 'GET' && url.pathname === '/api/export') {
+        const acct = await auth.requireAccount(req);
         return send(res, 200, {
-          schemaVersion: 1,
+          schemaVersion: 2,
           questionVersion: 1,
+          account: { email: acct.email, displayName: acct.display_name, username: acct.username, bio: acct.bio },
           exportedAt: new Date().toISOString(),
           ratings: await getRatings(id),
           watchlist: (await p.query('SELECT movie_id FROM watchlist WHERE profile_id=$1', [id])).rows.map(r => r.movie_id),
@@ -275,9 +273,7 @@ export async function handleRequest(req, res) {
       }
 
       if (req.method === 'DELETE' && url.pathname === '/api/profile') {
-        await p.query('DELETE FROM profiles WHERE id=$1', [id]);
-        res.setHeader('Set-Cookie', 'af_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0');
-        return send(res, 200, { ok: true });
+        return send(res, 409, { error: 'Delete your account through Profile with your current password.', code: 'REAUTH_REQUIRED' });
       }
 
       return send(res, 404, { error: 'Endpoint not found.' });
@@ -285,7 +281,15 @@ export async function handleRequest(req, res) {
 
     if (req.method !== 'GET') return send(res, 405, { error: 'Method not allowed.' });
     let rel = decodeURIComponent(url.pathname);
-    if (rel === '/') rel = '/index.html';
+    if (rel === '/' || rel === '/landing') rel = '/landing.html';
+    if (['/app', '/app/', '/index.html'].includes(rel)) {
+      if (!await auth.getSession(req)) {
+        res.writeHead(302, { Location: '/landing.html?next=%2Fapp', 'Cache-Control': 'no-store' });
+        res.end();
+        return;
+      }
+      rel = '/index.html';
+    }
     const full = path.resolve(root, 'public', '.' + rel);
     if (!full.startsWith(path.join(root, 'public') + path.sep)) return send(res, 403, { error: 'Forbidden.' });
     const ext = path.extname(full);
@@ -303,24 +307,32 @@ export async function handleRequest(req, res) {
     });
     res.end(content);
   } catch (e) {
-    console.error('Request error:', e);
-    const status = e.code === 'ENOENT' ? 404 : e.status || 500;
-    send(res, status, { error: `Storage could not complete this request: ${e.message}` });
+    if (e instanceof AuthError) return send(res, e.status, { error: e.message, code: e.code });
+    const status = e.code === 'ENOENT' ? 404 : e.status || 400;
+    if (!e.code && !e.status) console.error(e.message);
+    if (e.code && e.code !== 'ENOENT') return send(res, 500, { error: 'Storage could not complete this request. Your answers have not been marked as saved.' });
+    send(res, status, { error: e.code === 'ENOENT' ? 'Not found.' : e.message });
   }
 }
 
-export default handleRequest;
 export const server = http.createServer(handleRequest);
+export default handleRequest;
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+server.requestTimeout = 15000;
+server.headersTimeout = 10000;
+server.keepAliveTimeout = 5000;
+server.maxHeadersCount = 64;
+
+if (process.argv[1] && (process.argv[1].endsWith('server.mjs') || process.argv[1].endsWith('server.js'))) {
   const port = Number(process.env.PORT || 3000);
-  server.listen(port, '0.0.0.0', () => console.log(`Afterframe listening on ${port} · PostgreSQL connected`));
+  server.listen(port, process.env.HOST || (isProd ? '0.0.0.0' : '127.0.0.1'), () => console.log(`Afterframe listening on ${port} · PostgreSQL connected`));
   const cleanup = setInterval(() => {
     for (const [id, e] of limiter) if (Date.now() - e.t > 120000) limiter.delete(id);
     if (pool) pool.query('DELETE FROM sessions WHERE expires_at<now()').catch(() => {});
   }, 600000);
   cleanup.unref();
   async function shutdown() {
+    if (auth) auth.close();
     clearInterval(cleanup);
     server.close();
     if (pool) await pool.end();

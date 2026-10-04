@@ -1,3 +1,9 @@
+# Afterframe v1.2 — verified accounts and a public landing
+
+The public entry is `/`; the existing journal is `/app` and requires a verified account. Apply the included account documentation before production. Local signup/recovery mail is delivered privately into `.dev-mail/`, not to a live inbox. The current HTML bundler creates a landing/UI preview only; it cannot create an account or log movies.
+
+See `docs/AUTH-ARCHITECTURE.md` and `docs/LOCAL-AND-PRODUCTION.md` for the account design and deployment prerequisites. The catalogue, scoring and recommendation notes below remain applicable; legacy anonymous-profile assumptions do not.
+
 # Afterframe
 **Look a little closer.** A working film journal with a populated movie catalogue and first-review recommendations.
 
@@ -65,10 +71,10 @@ The current historical source does not cover all releases, languages or countrie
 
 There are no fabricated community ratings or example user reviews in the delivered app. The featured shelf is curated; initial personalised picks are separately labelled metadata matches. The threshold is a conservative UX gate, not a statistical guarantee. The model needs offline evaluation, holdout tests, uncertainty calibration and collaborative filtering before being sold as accurate personalisation. It currently assumes positive, approximately linear associations. Correlated self-reported aspects can still confound it.
 
-## Preview versus full app
-The separately delivered `Afterframe-preview.html` is self-contained and interactive. It uses **browser local storage**, not PostgreSQL. It supports the quiz, drafts, journal, watchlist, custom entries descriptive taste screen and initial metadata-based picks; sharing across users and aspect-based aggregate recommendations require the backend. The complete source catalogue is embedded, but browser storage persists only personal entries/custom films, not another copy of 9,742 records. This distinction appears in the preview’s storage label and settings. Some embedded browsers block persistence; export before leaving if warned.
+## Preview versus authenticated app
+The separate `Afterframe-landing-preview.html` is a visual landing/auth-dialog preview. It deliberately cannot create an account, authenticate, save a password or log a movie. The patched main app runs at `/app` through the Node backend and requires a verified account. The old v1.1 localStorage-only preview is not an authenticated product and must not be used as a login bypass.
 
-Build it again with `npm run bundle` (writes `../Afterframe-preview.html`). The generated file is not a hosted service. The full application can be deployed to a Node/Docker host with PostgreSQL. An HTML embed cannot run a PostgreSQL server.
+Build the new landing preview with `npm run bundle`. Real accounts and journal operations require PostgreSQL and the server. Read `docs/LOCAL-AND-PRODUCTION.md` for verification mail and deployment setup.
 
 ## Test
 Start `npm run dev` in one terminal, then:
@@ -78,17 +84,17 @@ npm test
 Tests cover rubric math, skip handling, invalid dates/scores, duplicate aspects, insufficient data, rewatch deduplication, synthetic preference recovery, real database roundtrips, ownership isolation, exports, watchlist, deletion, CSRF, opt-in and recommendation evidence gates. API tests create and remove temporary profiles. The recommendation test also cleans temporary catalogue fixtures using the development database URL. Set `TEST_URL` and `TEST_DATABASE_URL` together if testing another non-production instance. **Never run mutation tests against real user data.**
 
 ## Before public launch
-This is a functioning private-browser MVP, **not a finished public social network**. It has no account login, cross-device identity or account recovery. A private cookie identifies the current browser; losing it loses access, so export first. HttpOnly/SameSite cookies, ownership-scoped reads, escaping, parameterised SQL, request limits and restrictive script CSP are included, but they do not replace production authentication.
+This is a functioning private-browser MVP, **not a finished public social network**. It now has verified-email password accounts, revocable sessions and recovery; MFA, public/social profiles and avatar uploads are not implemented. A verified account owns the journal. Signing in again restores access; browser cookies are sessions, not the account identity. HttpOnly/SameSite cookies, ownership-scoped reads, escaping, parameterised SQL, request limits and restrictive script CSP are included, but they do not replace production authentication.
 
 Before public hosting:
-- Add real authentication and account recovery; do not treat anonymous browser profiles as robust independent viewers.
+- Review the implemented authentication/recovery baseline and add production MFA/abuse defenses. Do not treat anonymous browser profiles as robust independent viewers.
 - Use HTTPS; set `NODE_ENV=production`, `APP_ORIGIN=https://your-domain`, a unique managed `DATABASE_URL`, and proper TLS as needed. Secure cookies are enabled in production. Never use the local database password.
 - Add IP-level distributed rate limits, catalogue moderation, anti-Sybil protections, structured migrations, backup/restore drills, monitoring, privacy policy and retention rules.
 - Obtain the appropriate licence/permissions for film artwork and metadata; consider a properly attributed TMDB integration.
 - Evaluate recommendation quality and uncertainty. The prototype requires opt-in numerical contributions but has no public profiles or public review sharing.
 
 ## Artwork
-Film posters and cinematic stills/wallpapers (Interstellar, Parasite, Whiplash, Past Lives) were downloaded from the TMDB image CDN for this prototype. Artwork remains the property of respective rights holders. This app is not endorsed or certified by TMDB. Attribution is also visible under **The method**. The original camera doodle was AI-generated for Afterframe; the transparent version is a cleaned crop of that image. The wordmark and favicon are code-native graphics.
+Film posters and the Interstellar still were downloaded from the TMDB image CDN for this prototype. Artwork remains the property of respective rights holders. This app is not endorsed or certified by TMDB. Attribution is also visible under **The method**. The original camera doodle was AI-generated for Afterframe; the transparent version is a cleaned crop of that image. The wordmark and favicon are code-native graphics.
 
 ## Stack
 Vanilla JavaScript ES modules, CSS, Node’s HTTP server, `pg`, PostgreSQL. No frontend framework or build service is needed. The small dependency surface is intentional. Docker configuration and a reproducible npm lockfile are included.

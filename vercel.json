@@ -5,7 +5,7 @@
       "src": "api/index.mjs",
       "use": "@vercel/node",
       "config": {
-        "includeFiles": ["catalogue/**", "db/**", "data.mjs", "public/data.js"]
+        "includeFiles": ["catalogue/**", "db/**", "data.mjs", "public/**", "server/**"]
       }
     },
     {
@@ -17,6 +17,22 @@
     {
       "src": "/api/(.*)",
       "dest": "api/index.mjs"
+    },
+    {
+      "src": "/app(.*)",
+      "dest": "api/index.mjs"
+    },
+    {
+      "src": "/index.html",
+      "dest": "api/index.mjs"
+    },
+    {
+      "src": "/",
+      "dest": "public/landing.html"
+    },
+    {
+      "src": "/landing",
+      "dest": "public/landing.html"
     },
     {
       "src": "/(.*)",

@@ -1,6 +1,6 @@
 {
   "name": "afterframe",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "type": "module",
   "description": "A considered film journal with PostgreSQL-backed aspect ratings.",
@@ -14,6 +14,7 @@
     "node": ">=22"
   },
   "dependencies": {
+    "@node-rs/argon2": "^2.2.1",
     "pg": "^8.23.1"
   },
   "devDependencies": {

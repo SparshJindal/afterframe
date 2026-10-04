@@ -1,8 +1,14 @@
+// Authenticated journals cannot be shipped as a localStorage-only HTML demo.
+// This bundle is a LANDING/UI preview only. Account actions require the real server.
 import fs from 'node:fs/promises';import path from 'node:path';import {fileURLToPath} from 'node:url';
-const root=path.dirname(fileURLToPath(import.meta.url));let html=await fs.readFile(path.join(root,'public/index.html'),'utf8');let css=await fs.readFile(path.join(root,'public/styles.css'),'utf8');let js=await fs.readFile(path.join(root,'public/app.js'),'utf8');js=js.replace(/^import .*?;\n/gm,'');const model=(await fs.readFile(path.join(root,'public/model.js'),'utf8')).replace(/\bexport /g,'');const data=await fs.readFile(path.join(root,'public/data.js'),'utf8');const recommend=(await fs.readFile(path.join(root,'public/recommend.js'),'utf8')).replace(/\bexport /g,'');const catalogue=await fs.readFile(path.join(root,'catalogue/movies.json'),'utf8');const meta=await fs.readFile(path.join(root,'catalogue/source.json'),'utf8');
-const files=(await fs.readdir(path.join(root,'public/assets'))).filter(f=>!f.endsWith('.svg'));const assets={};for(const file of files)assets['assets/'+file]='data:image/'+(file.endsWith('.png')?'png':'jpeg')+';base64,'+(await fs.readFile(path.join(root,'public/assets',file))).toString('base64');
-for(const [src,uri]of Object.entries(assets)){html=html.split(src).join(uri);css=css.split(src).join(uri);}
-const allJS=`window.AF_OFFLINE=true;if(!location.hash)location.hash="discover";window.AF_CATALOGUE=${catalogue};window.AF_CATALOGUE_META=${meta};\nconst AF_ASSETS=${JSON.stringify(assets)};\n${data}\nfor(const m of MOVIES){if(m.poster)m.poster=AF_ASSETS[m.poster]||m.poster;if(m.wallpaper)m.wallpaper=AF_ASSETS[m.wallpaper]||m.wallpaper;}\n${model}\n${recommend}\n${js}`.replace('src="assets/mascot.png"','src="${AF_ASSETS[\'assets/mascot.png\']}"');
-html=html.replace('<link rel="icon" href="assets/favicon.svg">','');
-html=html.replace('<link rel="stylesheet" href="styles.css">',()=>`<style>${css}</style>`).replace('<script src="data.js"></script><script src="catalogue-data.js"></script><script type="module" src="app.js"></script>',()=>`<script type="module">${allJS.replace(/<\/script/gi,'<\\/script')}</script>`);
-await fs.writeFile(path.join(root,'../Afterframe-preview.html'),html);console.log('Built self-contained interactive preview.');
+const root=path.dirname(fileURLToPath(import.meta.url));
+let html=await fs.readFile(path.join(root,'public/landing.html'),'utf8');
+const css=(await fs.readFile(path.join(root,'public/landing.css'),'utf8'))+'\n'+await fs.readFile(path.join(root,'public/auth.css'),'utf8');
+const policy=await fs.readFile(path.join(root,'public/password-policy.js'),'utf8');
+const client=await fs.readFile(path.join(root,'public/auth-client.js'),'utf8');
+const landing=await fs.readFile(path.join(root,'public/landing.js'),'utf8');
+const js=('window.AF_LANDING_PREVIEW=true;\n'+policy+'\n'+client+'\n'+landing).replace(/^import .*?;\n/gm,'').replace(/\bexport /g,'');
+for(const asset of ['interstellar.jpg','past-lives.jpg','mascot.png']){const uri='data:image/'+(asset.endsWith('.png')?'png':'jpeg')+';base64,'+(await fs.readFile(path.join(root,'public/assets',asset))).toString('base64');html=html.split('assets/'+asset).join(uri);}
+html=html.replace('<link rel="icon" href="assets/favicon.svg">','').replace('<link rel="stylesheet" href="landing.css"><link rel="stylesheet" href="auth.css">',()=>`<style>${css}</style>`).replace('<script type="module" src="landing.js"></script>',()=>`<script type="module">${js.replace(/<\/script/gi,'<\\/script')}</script>`);
+await fs.writeFile(path.join(root,'../Afterframe-landing-preview.html'),html);
+console.log('Built a self-contained landing preview. Authentication is intentionally unavailable offline.');

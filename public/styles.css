@@ -32,30 +32,4 @@
 .hero-arrow{width:32px;height:32px;border-radius:2px;border:1px solid rgba(255,255,255,0.35);background:rgba(20,20,20,0.4);color:#fff;font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .2s}
 .hero-arrow:hover{background:rgba(255,255,255,0.25)}
 
-/* Starting shelf wallpaper badge */
-.wallpaper-badge{position:absolute;top:10px;left:10px;background:rgba(20,23,20,0.85);color:#f4f1e9;border:1px solid rgba(255,255,255,0.25);border-radius:2px;font-size:11px;padding:4px 8px;cursor:pointer;backdrop-filter:blur(6px);transition:all .2s;z-index:2;line-height:1.2}
-.wallpaper-badge:hover{background:var(--red);color:#fff;border-color:var(--red);transform:scale(1.05)}
-
-/* Wallpaper Gallery Modal */
-.wallpaper-modal{padding:30px;display:flex;flex-direction:column;gap:22px;max-width:960px}
-.wallpaper-stage{position:relative;border-radius:3px;overflow:hidden;background:#151817;box-shadow:0 12px 36px rgba(0,0,0,0.35)}
-.wallpaper-preview-img{width:100%;height:auto;max-height:56vh;object-fit:cover;display:block}
-.wallpaper-caption{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:18px 24px;background:#1e2422;color:#f4f1e9;flex-wrap:wrap}
-.wallpaper-caption h3{font:normal 24px Georgia,serif;margin:0 0 4px}
-.wallpaper-caption p{font-size:13px;color:#a8ad9f;margin:0}
-.wallpaper-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.wallpaper-picker-shelf{border-top:1px solid var(--line);padding-top:18px}
-.wallpaper-thumbnails{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
-.wallpaper-thumb{border:2px solid var(--line);border-radius:3px;overflow:hidden;background:#20231f;cursor:pointer;padding:0;text-align:left;display:flex;flex-direction:column;transition:border-color .2s,transform .2s}
-.wallpaper-thumb img{width:100%;height:78px;object-fit:cover;display:block}
-.wallpaper-thumb span{padding:8px 10px;font-size:12px;color:var(--ink);background:var(--paper);display:block}
-.wallpaper-thumb span strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.wallpaper-thumb span small{color:var(--muted);display:block;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.wallpaper-thumb:hover{border-color:var(--red);transform:translateY(-2px)}
-.wallpaper-thumb.active{border-color:var(--red);box-shadow:0 0 0 2px var(--red)}
-@media(max-width:700px){
-  .wallpaper-thumbnails{grid-template-columns:repeat(2,1fr)}
-  .wallpaper-caption{flex-direction:column;align-items:flex-start}
-  .wallpaper-modal{padding:20px 14px}
-}
 

@@ -1,0 +1,8 @@
+node_modules
+.postgres
+.dev-mail
+.env
+.env.*
+!.env.example
+*.log
+.git
