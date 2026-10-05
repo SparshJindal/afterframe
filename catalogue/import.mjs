@@ -1,6 +1,9 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { catalogueMeta } from './source.mjs';
+
+const dir = path.dirname(fileURLToPath(import.meta.url));
 
 export async function importCatalogue(pool, root = process.cwd()) {
   const meta = catalogueMeta;
@@ -10,6 +13,7 @@ export async function importCatalogue(pool, root = process.cwd()) {
 
     let moviesRaw = null;
     const candidates = [
+      path.join(dir, 'movies.json'),
       path.join(root, 'catalogue/movies.json'),
       path.resolve(process.cwd(), 'catalogue/movies.json'),
       '/var/task/catalogue/movies.json'

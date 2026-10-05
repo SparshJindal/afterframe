@@ -181,11 +181,21 @@ export async function handleRequest(req, res) {
           }
         }
 
-        if (!posterUrl && movieId) {
-          const row = (await p.query('SELECT title, year FROM movies WHERE id=$1', [movieId])).rows[0];
-          if (row?.title) {
+        const titleParam = url.searchParams.get('title');
+        const yearParam = url.searchParams.get('year');
+        if (!posterUrl && (movieId || titleParam)) {
+          let title = titleParam;
+          let year = yearParam || '';
+          if (movieId) {
+            const row = (await p.query('SELECT title, year FROM movies WHERE id=$1', [movieId])).rows[0];
+            if (row?.title) {
+              title = row.title;
+              year = row.year || year;
+            }
+          }
+          if (title) {
             try {
-              const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(row.title + ' ' + (row.year || '') + ' film')}&format=json`;
+              const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(title + ' ' + (year || '') + ' film')}&format=json`;
               const sr = await fetch(searchUrl, { headers: { 'User-Agent': 'AfterframeApp/1.0 (contact: admin@afterframe.app)' }, signal: AbortSignal.timeout(4000) });
               if (sr.ok) {
                 const sdata = await sr.json();
