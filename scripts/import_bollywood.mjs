@@ -1018,6 +1018,26 @@ export const MOVIELENS_POSTER_PATCHES = {
   }
 };
 
+export const CURATED_ADDITIONS = [
+  {
+    id: 'uncut-gems',
+    title: 'Uncut Gems',
+    originalTitle: 'Uncut Gems (2019)',
+    year: 2019,
+    director: 'Josh and Benny Safdie',
+    genres: ['Crime', 'Drama', 'Thriller'],
+    runtime: 135,
+    poster: 'https://upload.wikimedia.org/wikipedia/en/a/a7/Uncut_Gems_poster.jpg',
+    movielensId: null,
+    imdbId: 'tt5727208',
+    tmdbId: 473033,
+    tags: ['safdie brothers', 'adam sandler', 'gambling', 'anxiety', 'new york', 'diamond district', 'tense', 'chaos', 'sports betting', 'kevin garnett'],
+    ratingCount: 220,
+    ratingMean: 4.45,
+    source: 'Curated Modern Cinema'
+  }
+];
+
 export async function runImport() {
   const moviesPath = path.join(root, 'catalogue/movies.json');
   const sourcePath = path.join(root, 'catalogue/source.json');
@@ -1035,9 +1055,9 @@ export async function runImport() {
     }
   }
 
-  // Insert or update Bollywood titles
+  // Insert or update Bollywood & Curated titles
   let addedCount = 0;
-  for (const b of BOLLYWOOD_MOVIES) {
+  for (const b of [...BOLLYWOOD_MOVIES, ...CURATED_ADDITIONS]) {
     if (movieMap.has(b.id)) {
       Object.assign(movieMap.get(b.id), b);
     } else {
@@ -1051,7 +1071,7 @@ export async function runImport() {
 
   // Update source metadata
   const source = JSON.parse(fs.readFileSync(sourcePath, 'utf8'));
-  source.version = '2018-09-26-bollywood-v1';
+  source.version = '2018-09-26-bollywood-v2';
   source.movieCount = updatedMovies.length;
   source.bollywoodCount = BOLLYWOOD_MOVIES.length;
   fs.writeFileSync(sourcePath, JSON.stringify(source, null, 2), 'utf8');
