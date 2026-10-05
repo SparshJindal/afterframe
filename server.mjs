@@ -53,7 +53,9 @@ export async function ensureInit() {
       catalogueMeta = runMigrations ? await importCatalogue(p, root) : (await p.query('SELECT metadata FROM catalogue_imports WHERE source=$1', ['MovieLens latest-small'])).rows[0]?.metadata;
       if (!catalogueMeta) throw Error('Catalogue migration is required before starting this app.');
 
-      const appOrigin = process.env.APP_ORIGIN || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : `http://localhost:${process.env.PORT || 3000}`);
+      const rawAppOrigin = process.env.APP_ORIGIN || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : `http://localhost:${process.env.PORT || 3000}`);
+      let appOrigin = rawAppOrigin;
+      try { appOrigin = new URL(rawAppOrigin).origin; } catch {}
       auth = await createAuth(p, { root, production: isProd, origin: appOrigin, runMigrations });
     })().catch(err => {
       console.error('Database initialization warning:', err.message);
@@ -121,8 +123,9 @@ export async function handleRequest(req, res) {
         await auth.assertMutation(req);
         const origin = req.headers.origin;
         const proto = req.headers['x-forwarded-proto'] || 'http';
-        const host = req.headers.host;
-        const expected = process.env.APP_ORIGIN || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : `${proto}://${host}`);
+        const rawExpected = process.env.APP_ORIGIN || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : `${proto}://${host}`);
+        let expected = rawExpected;
+        try { expected = new URL(rawExpected).origin; } catch {}
         if (isProd && !process.env.APP_ORIGIN && !process.env.VERCEL_URL) return send(res, 503, { error: 'Set APP_ORIGIN before deploying.' });
         if (origin && origin !== expected && origin !== `https://${host}` && origin !== `http://${host}`) return send(res, 403, { error: 'Cross-origin request blocked.' });
         if (req.headers['sec-fetch-site'] === 'cross-site') return send(res, 403, { error: 'Cross-site request blocked.' });
