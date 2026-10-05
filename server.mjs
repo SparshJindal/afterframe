@@ -50,7 +50,12 @@ export async function ensureInit() {
           await p.query('INSERT INTO question_versions(version,aspect_id,label,prompt) VALUES(1,$1,$2,$3) ON CONFLICT DO NOTHING', [a.id, a.name, a.question]);
         }
       }
-      catalogueMeta = runMigrations ? await importCatalogue(p, root) : (await p.query('SELECT metadata FROM catalogue_imports WHERE source=$1', ['MovieLens latest-small'])).rows[0]?.metadata;
+      try {
+        catalogueMeta = await importCatalogue(p, root);
+      } catch (err) {
+        console.warn('Import catalogue fallback:', err.message);
+        catalogueMeta = (await p.query('SELECT metadata FROM catalogue_imports WHERE source=$1', ['MovieLens latest-small'])).rows[0]?.metadata;
+      }
       if (!catalogueMeta) throw Error('Catalogue migration is required before starting this app.');
 
       const rawAppOrigin = process.env.APP_ORIGIN || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : `http://localhost:${process.env.PORT || 3000}`);
@@ -109,7 +114,7 @@ export async function handleRequest(req, res) {
   if (isProd) res.setHeader('Strict-Transport-Security', 'max-age=31536000');
   res.setHeader('Referrer-Policy', 'no-referrer');
   res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('Content-Security-Policy', "default-src 'self'; img-src 'self' data:; style-src 'self'; style-src-attr 'unsafe-inline'; script-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'");
+  res.setHeader('Content-Security-Policy', "default-src 'self'; img-src 'self' data: https:; style-src 'self'; style-src-attr 'unsafe-inline'; script-src 'self'; connect-src 'self' https:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'");
 
   try {
     const url = new URL(req.url, 'http://localhost');
@@ -135,6 +140,76 @@ export async function handleRequest(req, res) {
       if (url.pathname === '/api/health') {
         await p.query('SELECT 1');
         return send(res, 200, { status: 'ok', storage: 'postgresql' });
+      }
+
+      if (url.pathname === '/api/poster' && req.method === 'GET') {
+        const movieId = url.searchParams.get('id');
+        const tmdbId = url.searchParams.get('tmdbId');
+        if (!movieId && !tmdbId) return send(res, 400, { error: 'Provide id or tmdbId.' });
+
+        if (movieId) {
+          const existing = await p.query('SELECT poster FROM movies WHERE id=$1', [movieId]);
+          if (existing.rows[0]?.poster) {
+            res.setHeader('Cache-Control', 'public, max-age=86400');
+            return send(res, 200, { poster: existing.rows[0].poster });
+          }
+        }
+
+        let posterUrl = '';
+        if (tmdbId) {
+          if (process.env.TMDB_API_KEY) {
+            try {
+              const r = await fetch(`https://api.themoviedb.org/3/movie/${tmdbId}?api_key=${process.env.TMDB_API_KEY}`, { signal: AbortSignal.timeout(4000) });
+              if (r.ok) {
+                const d = await r.json();
+                if (d.poster_path) posterUrl = `https://image.tmdb.org/t/p/w500${d.poster_path}`;
+              }
+            } catch {}
+          }
+          if (!posterUrl) {
+            try {
+              const r = await fetch(`https://www.themoviedb.org/movie/${tmdbId}`, {
+                headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36' },
+                signal: AbortSignal.timeout(4000)
+              });
+              if (r.ok) {
+                const html = await r.text();
+                const match = html.match(/<meta property="og:image" content="(https:\/\/[^"]+)"/);
+                if (match) posterUrl = match[1];
+              }
+            } catch {}
+          }
+        }
+
+        if (!posterUrl && movieId) {
+          const row = (await p.query('SELECT title, year FROM movies WHERE id=$1', [movieId])).rows[0];
+          if (row?.title) {
+            try {
+              const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(row.title + ' ' + (row.year || '') + ' film')}&format=json`;
+              const sr = await fetch(searchUrl, { headers: { 'User-Agent': 'AfterframeApp/1.0 (contact: admin@afterframe.app)' }, signal: AbortSignal.timeout(4000) });
+              if (sr.ok) {
+                const sdata = await sr.json();
+                const pageTitle = sdata.query?.search?.[0]?.title;
+                if (pageTitle) {
+                  const sumUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(pageTitle)}`;
+                  const sumRes = await fetch(sumUrl, { headers: { 'User-Agent': 'AfterframeApp/1.0 (contact: admin@afterframe.app)' }, signal: AbortSignal.timeout(4000) });
+                  if (sumRes.ok) {
+                    const sumData = await sumRes.json();
+                    if (sumData.thumbnail?.source) posterUrl = sumData.thumbnail.source;
+                  }
+                }
+              }
+            } catch {}
+          }
+        }
+
+        if (posterUrl && movieId) {
+          await p.query('UPDATE movies SET poster=$1 WHERE id=$2', [posterUrl, movieId]).catch(() => {});
+        }
+
+        if (!posterUrl) return send(res, 404, { error: 'Poster not found.' });
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+        return send(res, 200, { poster: posterUrl });
       }
 
       const id = await profile(req, res);
