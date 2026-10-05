@@ -1015,6 +1015,11 @@ export const MOVIELENS_POSTER_PATCHES = {
     director: 'Denis Villeneuve',
     runtime: 164,
     poster: 'https://upload.wikimedia.org/wikipedia/en/9/9b/Blade_Runner_2049_logo.png'
+  },
+  'ml-2021': {
+    director: 'David Lynch',
+    runtime: 137,
+    poster: 'https://upload.wikimedia.org/wikipedia/en/5/52/Dune1984Poster.jpg'
   }
 };
 
@@ -1034,6 +1039,57 @@ export const CURATED_ADDITIONS = [
     tags: ['safdie brothers', 'adam sandler', 'gambling', 'anxiety', 'new york', 'diamond district', 'tense', 'chaos', 'sports betting', 'kevin garnett'],
     ratingCount: 220,
     ratingMean: 4.45,
+    source: 'Curated Modern Cinema'
+  },
+  {
+    id: 'dune-2021',
+    title: 'Dune',
+    originalTitle: 'Dune (2021)',
+    year: 2021,
+    director: 'Denis Villeneuve',
+    genres: ['Action', 'Adventure', 'Drama', 'Science fiction'],
+    runtime: 155,
+    poster: 'https://upload.wikimedia.org/wikipedia/en/8/8e/Dune_%282021_film%29.jpg',
+    movielensId: null,
+    imdbId: 'tt1160419',
+    tmdbId: 438631,
+    tags: ['arrakis', 'paul atreides', 'spice', 'sandworm', 'denis villeneuve', 'hans zimmer', 'frank herbert', 'sci-fi epic'],
+    ratingCount: 380,
+    ratingMean: 4.65,
+    source: 'Curated Modern Cinema'
+  },
+  {
+    id: 'dune-part-two',
+    title: 'Dune: Part Two',
+    originalTitle: 'Dune: Part Two (2024)',
+    year: 2024,
+    director: 'Denis Villeneuve',
+    genres: ['Action', 'Adventure', 'Drama', 'Science fiction'],
+    runtime: 166,
+    poster: 'https://upload.wikimedia.org/wikipedia/en/5/52/Dune_Part_Two_poster.jpeg',
+    movielensId: null,
+    imdbId: 'tt15239678',
+    tmdbId: 693134,
+    tags: ['arrakis', 'paul atreides', 'feyd-rautha', 'chani', 'sandworm', 'denis villeneuve', 'hans zimmer', 'timothee chalamet', 'zendaya', 'epic'],
+    ratingCount: 420,
+    ratingMean: 4.8,
+    source: 'Curated Modern Cinema'
+  },
+  {
+    id: 'jojo-rabbit',
+    title: 'Jojo Rabbit',
+    originalTitle: 'Jojo Rabbit (2019)',
+    year: 2019,
+    director: 'Taika Waititi',
+    genres: ['Comedy', 'Drama', 'War'],
+    runtime: 108,
+    poster: 'https://upload.wikimedia.org/wikipedia/en/a/a2/Jojo_Rabbit_%282019%29_poster.jpg',
+    movielensId: null,
+    imdbId: 'tt2584384',
+    tmdbId: 515001,
+    tags: ['satire', 'world war ii', 'anti-hate', 'taika waititi', 'imaginary friend', 'coming of age', 'scarlett johansson', 'oscar winner'],
+    ratingCount: 260,
+    ratingMean: 4.6,
     source: 'Curated Modern Cinema'
   }
 ];
@@ -1071,7 +1127,7 @@ export async function runImport() {
 
   // Update source metadata
   const source = JSON.parse(fs.readFileSync(sourcePath, 'utf8'));
-  source.version = '2018-09-26-bollywood-v2';
+  source.version = '2018-09-26-bollywood-v3';
   source.movieCount = updatedMovies.length;
   source.bollywoodCount = BOLLYWOOD_MOVIES.length;
   fs.writeFileSync(sourcePath, JSON.stringify(source, null, 2), 'utf8');
