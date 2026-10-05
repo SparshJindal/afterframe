@@ -1020,6 +1020,46 @@ export const MOVIELENS_POSTER_PATCHES = {
     director: 'David Lynch',
     runtime: 137,
     poster: 'https://upload.wikimedia.org/wikipedia/en/5/52/Dune1984Poster.jpg'
+  },
+  'ml-68157': {
+    director: 'Quentin Tarantino',
+    runtime: 153,
+    poster: 'https://upload.wikimedia.org/wikipedia/en/c/c3/Inglourious_Basterds_poster.jpg'
+  },
+  'ml-1101': {
+    director: 'Tony Scott',
+    runtime: 110,
+    poster: 'https://upload.wikimedia.org/wikipedia/en/4/46/Top_Gun_Movie.jpg'
+  },
+  'ml-4816': {
+    director: 'Ben Stiller',
+    runtime: 90,
+    poster: 'https://upload.wikimedia.org/wikipedia/en/7/7c/Movie_poster_zoolander.jpg'
+  },
+  'ml-99114': {
+    director: 'Quentin Tarantino',
+    runtime: 165,
+    poster: 'https://upload.wikimedia.org/wikipedia/en/8/8b/Django_Unchained_Poster.jpg'
+  },
+  'ml-111': {
+    director: 'Martin Scorsese',
+    runtime: 114,
+    poster: 'https://upload.wikimedia.org/wikipedia/en/3/33/Taxi_Driver_%281976_film_poster%29.jpg'
+  },
+  'ml-73017': {
+    director: 'Guy Ritchie',
+    runtime: 128,
+    poster: 'https://upload.wikimedia.org/wikipedia/en/e/e0/Sherlock_holmes2009_poster.jpg'
+  },
+  'ml-111759': {
+    director: 'Doug Liman',
+    runtime: 113,
+    poster: 'https://upload.wikimedia.org/wikipedia/en/f/f9/Edge_of_Tomorrow_Poster.jpg'
+  },
+  'ml-91542': {
+    director: 'Guy Ritchie',
+    runtime: 129,
+    poster: 'https://upload.wikimedia.org/wikipedia/en/5/53/Sherlock_Holmes_A_Game_of_Shadows_poster.jpg'
   }
 };
 
@@ -1501,7 +1541,7 @@ export async function runImport() {
 
   // Update source metadata
   const source = JSON.parse(fs.readFileSync(sourcePath, 'utf8'));
-  source.version = '2018-09-26-prestige-v4';
+  source.version = '2018-09-26-posters-v5';
   source.movieCount = updatedMovies.length;
   source.bollywoodCount = BOLLYWOOD_MOVIES.length;
   fs.writeFileSync(sourcePath, JSON.stringify(source, null, 2), 'utf8');

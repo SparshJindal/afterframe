@@ -199,13 +199,30 @@ export async function handleRequest(req, res) {
               const sr = await fetch(searchUrl, { headers: { 'User-Agent': 'AfterframeApp/1.0 (contact: admin@afterframe.app)' }, signal: AbortSignal.timeout(4000) });
               if (sr.ok) {
                 const sdata = await sr.json();
-                const pageTitle = sdata.query?.search?.[0]?.title;
-                if (pageTitle) {
-                  const sumUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(pageTitle)}`;
-                  const sumRes = await fetch(sumUrl, { headers: { 'User-Agent': 'AfterframeApp/1.0 (contact: admin@afterframe.app)' }, signal: AbortSignal.timeout(4000) });
-                  if (sumRes.ok) {
-                    const sumData = await sumRes.json();
-                    if (sumData.thumbnail?.source) posterUrl = sumData.thumbnail.source;
+                const hits = sdata.query?.search || [];
+                // Avoid soundtrack albums or scores
+                const filteredHits = hits.filter(h => {
+                  const t = (h.title || '').toLowerCase();
+                  return !t.includes('(soundtrack') && !t.includes('(score') && !t.includes('soundtrack)') && !t.includes('album');
+                });
+                const candidateHits = filteredHits.length > 0 ? filteredHits : hits;
+                for (const item of candidateHits.slice(0, 4)) {
+                  const pageTitle = item.title;
+                  if (pageTitle) {
+                    const sumUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(pageTitle)}`;
+                    const sumRes = await fetch(sumUrl, { headers: { 'User-Agent': 'AfterframeApp/1.0 (contact: admin@afterframe.app)' }, signal: AbortSignal.timeout(4000) });
+                    if (sumRes.ok) {
+                      const sumData = await sumRes.json();
+                      if (sumData.thumbnail?.source) {
+                        const h = sumData.thumbnail.height;
+                        const w = sumData.thumbnail.width;
+                        // Theatrical cinema posters are vertical (height >= 1.2 * width)
+                        if (!h || !w || (h / w >= 1.2)) {
+                          posterUrl = sumData.thumbnail.source;
+                          break;
+                        }
+                      }
+                    }
                   }
                 }
               }

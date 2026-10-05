@@ -2,7 +2,7 @@ export const catalogueMeta = {
   source: "MovieLens latest-small",
   sourceUrl: "https://grouplens.org/datasets/movielens/",
   downloadUrl: "https://files.grouplens.org/datasets/movielens/ml-latest-small.zip",
-  version: "2018-09-26-prestige-v4",
+  version: "2018-09-26-posters-v5",
   movieCount: 9818,
   bollywoodCount: 50,
   ratingCount: 100836,
