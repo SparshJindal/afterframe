@@ -22,6 +22,35 @@ const fetchingPosters = new Set();
 window.addEventListener('error', e => {
   const t = e.target;
   if (t && t.tagName === 'IMG') {
+    const mid = t.dataset.movieId;
+    if (mid && !t.dataset.retried) {
+      t.dataset.retried = 'true';
+      fetch(`/api/poster?id=${encodeURIComponent(mid)}&title=${encodeURIComponent(t.alt.replace(/ poster$/, ''))}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (data?.poster && data.poster !== t.src) {
+            posterCache.set(mid, data.poster);
+            const film = state.movies?.find(m => m.id === mid);
+            if (film) film.poster = data.poster;
+            t.src = data.poster;
+            t.style.display = '';
+            if (t.nextElementSibling?.classList.contains('poster-placeholder')) {
+              t.nextElementSibling.style.display = 'none';
+            }
+            return;
+          }
+          t.style.display = 'none';
+          if (t.nextElementSibling?.classList.contains('poster-placeholder')) {
+            t.nextElementSibling.style.display = 'flex';
+          }
+        }).catch(() => {
+          t.style.display = 'none';
+          if (t.nextElementSibling?.classList.contains('poster-placeholder')) {
+            t.nextElementSibling.style.display = 'flex';
+          }
+        });
+      return;
+    }
     t.style.display = 'none';
     const fallback = t.nextElementSibling;
     if (fallback && fallback.classList.contains('poster-placeholder')) {
@@ -29,8 +58,8 @@ window.addEventListener('error', e => {
     }
   }
 }, true);
-function poster(m,cls=''){const cached=posterCache.get(m.id)||m.poster;const tone=Math.abs([...(m.id||'')].reduce((n,c)=>n+c.charCodeAt(0),0))%4;if(cached)return `<img class="${cls}" src="${esc(cached)}" alt="${esc(m.title)} poster" loading="lazy"><div class="poster-placeholder type-cover tone-${tone} ${cls}" style="display:none" aria-label="${esc(m.title)}; artwork unavailable"><small>${esc(m.genres?.[0]||'A film')}</small><span>${esc(m.title)}</span><small>${esc(m.year||'—')} <i>NO ARTWORK</i></small></div>`;return `<div class="poster-placeholder type-cover tone-${tone} ${cls}" data-poster-pending="${esc(m.id)}" data-tmdb="${esc(m.tmdbId||'')}" data-title="${esc(m.title)}" aria-label="${esc(m.title)}; artwork unavailable"><small>${esc(m.genres?.[0]||'A film')}</small><span>${esc(m.title)}</span><small>${esc(m.year||'—')} <i>NO ARTWORK</i></small></div>`;}
-async function resolvePendingPosters(root=document){const pending=$$('[data-poster-pending]',root);if(!pending.length)return;for(const el of pending){const id=el.dataset.posterPending;const tmdbId=el.dataset.tmdb;const title=el.dataset.title;const film=state.movies.find(m=>m.id===id);const tone=Math.abs([...(id||'')].reduce((n,c)=>n+c.charCodeAt(0),0))%4;if(posterCache.has(id)){const url=posterCache.get(id);if(url){const cls=el.className.replace('poster-placeholder','').replace(/tone-\d/,'').replace('type-cover','').trim();el.outerHTML=`<img class="${cls}" src="${esc(url)}" alt="${esc(title)} poster" loading="lazy"><div class="poster-placeholder type-cover tone-${tone} ${cls}" style="display:none" aria-label="${esc(title)}; artwork unavailable"><small>${esc(film?.genres?.[0]||'A film')}</small><span>${esc(title)}</span><small>${esc(film?.year||'—')} <i>NO ARTWORK</i></small></div>`;}continue;}if(fetchingPosters.has(id))continue;fetchingPosters.add(id);fetch(`/api/poster?id=${encodeURIComponent(id)}&tmdbId=${encodeURIComponent(tmdbId||'')}&title=${encodeURIComponent(title||'')}`).then(r=>r.ok?r.json():null).then(data=>{if(data?.poster){posterCache.set(id,data.poster);if(film)film.poster=data.poster;const current=$(`[data-poster-pending="${id}"]`);if(current){const cls=current.className.replace('poster-placeholder','').replace(/tone-\d/,'').replace('type-cover','').trim();current.outerHTML=`<img class="${cls}" src="${esc(data.poster)}" alt="${esc(title)} poster" loading="lazy"><div class="poster-placeholder type-cover tone-${tone} ${cls}" style="display:none" aria-label="${esc(title)}; artwork unavailable"><small>${esc(film?.genres?.[0]||'A film')}</small><span>${esc(title)}</span><small>${esc(film?.year||'—')} <i>NO ARTWORK</i></small></div>`;}}else{posterCache.set(id,'');}}).catch(()=>{posterCache.set(id,'');}).finally(()=>fetchingPosters.delete(id));}}
+function poster(m,cls=''){const cached=posterCache.get(m.id)||m.poster;const tone=Math.abs([...(m.id||'')].reduce((n,c)=>n+c.charCodeAt(0),0))%4;if(cached)return `<img class="${cls}" data-movie-id="${esc(m.id)}" src="${esc(cached)}" alt="${esc(m.title)} poster" loading="lazy"><div class="poster-placeholder type-cover tone-${tone} ${cls}" style="display:none" aria-label="${esc(m.title)}; artwork unavailable"><small>${esc(m.genres?.[0]||'A film')}</small><span>${esc(m.title)}</span><small>${esc(m.year||'—')} <i>NO ARTWORK</i></small></div>`;return `<div class="poster-placeholder type-cover tone-${tone} ${cls}" data-poster-pending="${esc(m.id)}" data-tmdb="${esc(m.tmdbId||'')}" data-title="${esc(m.title)}" aria-label="${esc(m.title)}; artwork unavailable"><small>${esc(m.genres?.[0]||'A film')}</small><span>${esc(m.title)}</span><small>${esc(m.year||'—')} <i>NO ARTWORK</i></small></div>`;}
+async function resolvePendingPosters(root=document){const pending=$$('[data-poster-pending]',root);if(!pending.length)return;for(const el of pending){const id=el.dataset.posterPending;const tmdbId=el.dataset.tmdb;const title=el.dataset.title;const film=state.movies.find(m=>m.id===id);const tone=Math.abs([...(id||'')].reduce((n,c)=>n+c.charCodeAt(0),0))%4;if(posterCache.has(id)){const url=posterCache.get(id);if(url){const cls=el.className.replace('poster-placeholder','').replace(/tone-\d/,'').replace('type-cover','').trim();el.outerHTML=`<img class="${cls}" data-movie-id="${esc(id)}" src="${esc(url)}" alt="${esc(title)} poster" loading="lazy"><div class="poster-placeholder type-cover tone-${tone} ${cls}" style="display:none" aria-label="${esc(title)}; artwork unavailable"><small>${esc(film?.genres?.[0]||'A film')}</small><span>${esc(title)}</span><small>${esc(film?.year||'—')} <i>NO ARTWORK</i></small></div>`;}continue;}if(fetchingPosters.has(id))continue;fetchingPosters.add(id);fetch(`/api/poster?id=${encodeURIComponent(id)}&tmdbId=${encodeURIComponent(tmdbId||'')}&title=${encodeURIComponent(title||'')}`).then(r=>r.ok?r.json():null).then(data=>{if(data?.poster){posterCache.set(id,data.poster);if(film)film.poster=data.poster;const current=$(`[data-poster-pending="${id}"]`);if(current){const cls=current.className.replace('poster-placeholder','').replace(/tone-\d/,'').replace('type-cover','').trim();current.outerHTML=`<img class="${cls}" data-movie-id="${esc(id)}" src="${esc(data.poster)}" alt="${esc(title)} poster" loading="lazy"><div class="poster-placeholder type-cover tone-${tone} ${cls}" style="display:none" aria-label="${esc(title)}; artwork unavailable"><small>${esc(film?.genres?.[0]||'A film')}</small><span>${esc(title)}</span><small>${esc(film?.year||'—')} <i>NO ARTWORK</i></small></div>`;}}else{posterCache.set(id,'');}}).catch(()=>{posterCache.set(id,'');}).finally(()=>fetchingPosters.delete(id));}}
 function nav(){route=['journal','discover','taste'].includes(location.hash.slice(1))?location.hash.slice(1):'journal';$$('[data-nav]').forEach(a=>a.classList.toggle('active',a.dataset.nav===route));render();}
 function filmCard(m){const saved=state.watchlist.includes(m.id);const review=[...(state.ratings||[])].reverse().find(r=>r.movieId===m.id);return `<article class="film-card"><div class="poster-wrap">${poster(m)}<button class="watch-button ${saved?'saved':''}" data-watch="${esc(m.id)}" aria-pressed="${saved}" aria-label="${saved?'Remove '+esc(m.title)+' from':'Add '+esc(m.title)+' to'} watchlist">${saved?'✓':'+'}</button>${review?`<button class="rate-film rated" data-review="${esc(review.id)}" aria-label="Rated ${esc(m.title)}; read your take">Rated ✓</button>`:`<button class="rate-film" data-rate="${esc(m.id)}">Rate this film ↗</button>`}</div><h3>${esc(m.title)}</h3><p class="film-meta"><span>${esc(m.year||'Year unknown')} · ${esc(m.director||'Director unavailable')}</span><span>${esc(m.genres?.[0]||'Your pick')}</span></p></article>`;}
 function diaryCard(r){const m=movie(r.movieId);return `<article class="diary-card">${poster(m,'diary-poster')}<div><h3>${esc(m.title)}</h3><div class="small">${esc(r.watchedOn)} · ${r.answers.filter(a=>a.score!==null).length}/8 aspects${r.spoilers?' · Spoiler notes':''}</div><button class="text-button" data-review="${esc(r.id)}">Read your take ↗</button></div><div class="rating-pair"><div><strong>${fmt(r.overall)}</strong><span>Your instinct /5</span></div><div><strong>${fmt(craftScore(r.answers))}</strong><span>Rubric score /5</span></div></div></article>`;}
