@@ -65,14 +65,33 @@ export async function ensureInit() {
       }
       if (!catalogueMeta) throw Error('Catalogue migration is required before starting this app.');
 
+      try {
+        await p.query(`
+          DELETE FROM ratings r1 USING ratings r2
+          WHERE r1.profile_id = r2.profile_id AND r1.movie_id = r2.movie_id AND r1.created_at < r2.created_at;
+          CREATE UNIQUE INDEX IF NOT EXISTS ratings_profile_movie ON ratings(profile_id, movie_id);
+        `);
+      } catch (err) {
+        console.warn('Unique index ratings_profile_movie notice:', err.message);
+      }
+
       const rawAppOrigin = process.env.APP_ORIGIN || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : `http://localhost:${process.env.PORT || 3000}`);
       let appOrigin = rawAppOrigin;
       try { appOrigin = new URL(rawAppOrigin).origin; } catch {}
       auth = await createAuth(p, { root, production: isProd, origin: appOrigin, runMigrations });
-      if(runMigrations)await p.query(await fs.readFile(path.join(root,'db/discovery-schema.sql'),'utf8'));await p.query('SELECT day FROM llm_daily_budget LIMIT 0');
+      try {
+        await p.query(await fs.readFile(path.join(root,'db/discovery-schema.sql'),'utf8'));
+      } catch (err) {
+        if (runMigrations) throw err;
+      }
+      await p.query('SELECT day FROM llm_daily_budget LIMIT 0');
       recommender=await createRecommender({pool:p,root,movieSelect,getRatings,populationPrior});
       discovery=createDiscovery({pool:p,auth,recommender});
-      if(runMigrations)await p.query(await fs.readFile(path.join(root,'db/social-schema.sql'),'utf8'));
+      try {
+        await p.query(await fs.readFile(path.join(root,'db/social-schema.sql'),'utf8'));
+      } catch (err) {
+        if (runMigrations) throw err;
+      }
       await p.query('SELECT id FROM friend_connections LIMIT 0');
       social=createSocial({pool:p,auth,body,send});
     })().catch(err => {
@@ -175,23 +194,15 @@ export async function handleRequest(req, res) {
         if (tmdbId) {
           if (process.env.TMDB_API_KEY) {
             try {
-              const r = await fetch(`https://api.themoviedb.org/3/movie/${tmdbId}?api_key=${process.env.TMDB_API_KEY}`, { signal: AbortSignal.timeout(4000) });
-              if (r.ok) {
-                const d = await r.json();
-                if (d.poster_path) posterUrl = `https://image.tmdb.org/t/p/w500${d.poster_path}`;
-              }
-            } catch {}
-          }
-          if (!posterUrl) {
-            try {
-              const r = await fetch(`https://www.themoviedb.org/movie/${tmdbId}`, {
-                headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36' },
-                signal: AbortSignal.timeout(4000)
-              });
-              if (r.ok) {
-                const html = await r.text();
-                const match = html.match(/<meta property="og:image" content="(https:\/\/[^"]+)"/);
-                if (match) posterUrl = match[1];
+              for (const type of ['movie', 'tv']) {
+                const r = await fetch(`https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=${process.env.TMDB_API_KEY}`, { signal: AbortSignal.timeout(4000) });
+                if (r.ok) {
+                  const d = await r.json();
+                  if (d.poster_path) {
+                    posterUrl = `https://image.tmdb.org/t/p/w500${d.poster_path}`;
+                    break;
+                  }
+                }
               }
             } catch {}
           }
@@ -211,34 +222,55 @@ export async function handleRequest(req, res) {
           }
           if (title) {
             try {
-              const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(title + ' ' + (year || '') + ' film')}&format=json`;
-              const sr = await fetch(searchUrl, { headers: { 'User-Agent': 'AfterframeApp/1.0 (contact: admin@afterframe.app)' }, signal: AbortSignal.timeout(4000) });
-              if (sr.ok) {
-                const sdata = await sr.json();
-                const hits = sdata.query?.search || [];
-                // Avoid soundtrack albums or scores
-                const filteredHits = hits.filter(h => {
-                  const t = (h.title || '').toLowerCase();
-                  return !t.includes('(soundtrack') && !t.includes('(score') && !t.includes('soundtrack)') && !t.includes('album');
-                });
-                const candidateHits = filteredHits.length > 0 ? filteredHits : hits;
-                for (const item of candidateHits.slice(0, 4)) {
-                  const pageTitle = item.title;
-                  if (pageTitle) {
+              const cleanTitle = title.replace(/\s*\(.*\)/, '').trim();
+              const searchQueries = [
+                cleanTitle + (year ? ' ' + year : ''),
+                cleanTitle + ' film',
+                cleanTitle + ' TV series'
+              ];
+              for (const q of searchQueries) {
+                if (posterUrl) break;
+                const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(q)}&format=json`;
+                const sr = await fetch(searchUrl, { headers: { 'User-Agent': 'AfterframeApp/1.0 (contact: admin@afterframe.app)' }, signal: AbortSignal.timeout(4000) });
+                if (sr.ok) {
+                  const sdata = await sr.json();
+                  const hits = (sdata.query?.search || []).filter(h => {
+                    const t = (h.title || '').toLowerCase();
+                    return !t.includes('(soundtrack') && !t.includes('(score') && !t.includes('soundtrack)') && !t.includes('album');
+                  });
+                  for (const item of hits.slice(0, 3)) {
+                    const pageTitle = item.title;
+                    if (!pageTitle) continue;
+                    // First try page summary
                     const sumUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(pageTitle)}`;
                     const sumRes = await fetch(sumUrl, { headers: { 'User-Agent': 'AfterframeApp/1.0 (contact: admin@afterframe.app)' }, signal: AbortSignal.timeout(4000) });
                     if (sumRes.ok) {
                       const sumData = await sumRes.json();
-                      if (sumData.thumbnail?.source) {
-                        const h = sumData.thumbnail.height;
-                        const w = sumData.thumbnail.width;
-                        // Theatrical cinema posters are vertical (height >= 1.2 * width)
-                        if (!h || !w || (h / w >= 1.2)) {
-                          posterUrl = sumData.thumbnail.source;
+                      const h = sumData.thumbnail?.height;
+                      const w = sumData.thumbnail?.width;
+                      if (sumData.thumbnail?.source && (!h || !w || (h / w >= 1.15))) {
+                        posterUrl = sumData.thumbnail.source;
+                        break;
+                      }
+                    }
+                    // Next try page HTML infobox image
+                    try {
+                      const artRes = await fetch(`https://en.wikipedia.org/wiki/${encodeURIComponent(pageTitle.replace(/ /g, '_'))}`, {
+                        headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)' },
+                        signal: AbortSignal.timeout(4000)
+                      });
+                      if (artRes.ok) {
+                        const html = await artRes.text();
+                        const m = html.match(/class="[^"]*infobox-image[^"]*"[^>]*>.*?<img[^>]+src="([^"]+)"/s) ||
+                                  html.match(/<table class="infobox[^>]*>.*?<img[^>]+src="([^"]+)"/s);
+                        if (m) {
+                          let u = m[1];
+                          if (u.startsWith('//')) u = 'https:' + u;
+                          posterUrl = u;
                           break;
                         }
                       }
-                    }
+                    } catch {}
                   }
                 }
               }
@@ -303,17 +335,27 @@ export async function handleRequest(req, res) {
         const films = await p.query('SELECT id FROM movies WHERE id=$1', [b.movieId]);
         validateRating(b, new Set(films.rows.map(r => r.id)));
         if (b.entryId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(b.entryId)) throw Error('Invalid entry ID.');
-        const rid = b.entryId || randomUUID();
-        const existing = await p.query('SELECT profile_id FROM ratings WHERE id=$1', [rid]);
-        if (existing.rowCount) {
-          if (existing.rows[0].profile_id === id) return send(res, 200, { id: rid });
-          return send(res, 409, { error: 'This entry ID is already in use.' });
+        if (b.entryId) {
+          const existingById = await p.query('SELECT profile_id, movie_id FROM ratings WHERE id=$1', [b.entryId]);
+          if (existingById.rowCount) {
+            if (existingById.rows[0].profile_id !== id) return send(res, 409, { error: 'This entry ID is already in use.' });
+            if (existingById.rows[0].movie_id !== b.movieId) return send(res, 409, { error: 'This entry ID belongs to a different movie.' });
+          }
         }
+        const existingByMovie = await p.query('SELECT id FROM ratings WHERE profile_id=$1 AND movie_id=$2', [id, b.movieId]);
+        const isUpdate = existingByMovie.rowCount > 0;
+        const targetRid = isUpdate ? existingByMovie.rows[0].id : (b.entryId || randomUUID());
         const c = await p.connect();
         try {
           await c.query('BEGIN');
-          await c.query('INSERT INTO ratings(id,profile_id,movie_id,overall,watched_on,spoilers) VALUES($1,$2,$3,$4,$5,$6)', [rid, id, b.movieId, b.overall, b.watchedOn, b.spoilers]);
-          for (const a of b.answers) await c.query('INSERT INTO answers(rating_id,question_version,aspect_id,score,skip_reason,note) VALUES($1,1,$2,$3,$4,$5)', [rid, a.aspectId, a.score, a.skipReason || null, a.note]);
+          if (isUpdate) {
+            await c.query('UPDATE ratings SET overall=$1, watched_on=$2, spoilers=$3, created_at=now() WHERE id=$4 AND profile_id=$5', [b.overall, b.watchedOn, b.spoilers, targetRid, id]);
+            await c.query('DELETE FROM answers WHERE rating_id=$1', [targetRid]);
+            for (const a of b.answers) await c.query('INSERT INTO answers(rating_id,question_version,aspect_id,score,skip_reason,note) VALUES($1,1,$2,$3,$4,$5)', [targetRid, a.aspectId, a.score, a.skipReason || null, a.note]);
+          } else {
+            await c.query('INSERT INTO ratings(id,profile_id,movie_id,overall,watched_on,spoilers) VALUES($1,$2,$3,$4,$5,$6)', [targetRid, id, b.movieId, b.overall, b.watchedOn, b.spoilers]);
+            for (const a of b.answers) await c.query('INSERT INTO answers(rating_id,question_version,aspect_id,score,skip_reason,note) VALUES($1,1,$2,$3,$4,$5)', [targetRid, a.aspectId, a.score, a.skipReason || null, a.note]);
+          }
           await c.query('DELETE FROM watchlist WHERE profile_id=$1 AND movie_id=$2', [id, b.movieId]);
           await c.query('COMMIT');
         } catch (e) {
@@ -322,7 +364,7 @@ export async function handleRequest(req, res) {
         } finally {
           c.release();
         }
-        return send(res, 201, { id: rid });
+        return send(res, isUpdate ? 200 : 201, { id: targetRid, updated: isUpdate });
       }
 
       if (req.method === 'DELETE' && url.pathname.startsWith('/api/ratings/')) {

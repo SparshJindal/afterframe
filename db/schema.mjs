@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS answers (rating_id uuid NOT NULL, question_version in
 CREATE TABLE IF NOT EXISTS watchlist (profile_id uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE, movie_id text NOT NULL REFERENCES movies(id), created_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY(profile_id,movie_id));
 CREATE INDEX IF NOT EXISTS ratings_profile_date ON ratings(profile_id,created_at DESC);
 CREATE INDEX IF NOT EXISTS ratings_movie ON ratings(movie_id);
+CREATE UNIQUE INDEX IF NOT EXISTS ratings_profile_movie ON ratings(profile_id, movie_id);
 CREATE INDEX IF NOT EXISTS sessions_expiry ON sessions(expires_at);
 COMMIT;
 ALTER TABLE movies ADD COLUMN IF NOT EXISTS original_title text NOT NULL DEFAULT '';
