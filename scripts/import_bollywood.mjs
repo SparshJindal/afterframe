@@ -1277,6 +1277,40 @@ export const MOVIELENS_POSTER_PATCHES = {
 
 export const CURATED_ADDITIONS = [
   {
+    id: 'knives-out',
+    title: 'Knives Out',
+    originalTitle: 'Knives Out (2019)',
+    year: 2019,
+    director: 'Rian Johnson',
+    genres: ['Comedy', 'Crime', 'Drama', 'Mystery', 'Thriller'],
+    runtime: 130,
+    poster: 'https://upload.wikimedia.org/wikipedia/en/1/1f/Knives_Out_poster.jpeg',
+    movielensId: null,
+    imdbId: 'tt8946378',
+    tmdbId: 546554,
+    tags: ['whodunnit', 'benoit blanc', 'daniel craig', 'rian johnson', 'murder mystery', 'harlan thrombey', 'marta cabrera', 'ana de armas', 'chris evans', 'donut hole', 'inheritance'],
+    ratingCount: 460,
+    ratingMean: 4.8,
+    source: 'Curated Modern Cinema'
+  },
+  {
+    id: 'glass-onion',
+    title: 'Glass Onion: A Knives Out Mystery',
+    originalTitle: 'Glass Onion: A Knives Out Mystery (2022)',
+    year: 2022,
+    director: 'Rian Johnson',
+    genres: ['Comedy', 'Crime', 'Drama', 'Mystery'],
+    runtime: 140,
+    poster: 'https://upload.wikimedia.org/wikipedia/en/6/62/Glass_Onion_poster.jpg',
+    movielensId: null,
+    imdbId: 'tt11564570',
+    tmdbId: 661374,
+    tags: ['whodunnit', 'benoit blanc', 'daniel craig', 'rian johnson', 'edward norton', 'janelle monae', 'murder mystery', 'puzzle box', 'tech billionaire', 'greece private island'],
+    ratingCount: 420,
+    ratingMean: 4.65,
+    source: 'Curated Modern Cinema'
+  },
+  {
     "id": "mcu-loki",
     "title": "Loki",
     "originalTitle": "Loki (2021)",
@@ -2763,7 +2797,7 @@ export async function runImport() {
 
   // Update source metadata
   const source = JSON.parse(fs.readFileSync(sourcePath, 'utf8'));
-  source.version = '2018-09-26-marvel-v6';
+  source.version = '2018-09-26-knives-out-v7';
   source.movieCount = updatedMovies.length;
   source.bollywoodCount = BOLLYWOOD_MOVIES.length;
   fs.writeFileSync(sourcePath, JSON.stringify(source, null, 2), 'utf8');
