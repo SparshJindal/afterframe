@@ -159,23 +159,15 @@ export async function handleRequest(req, res) {
         if (tmdbId) {
           if (process.env.TMDB_API_KEY) {
             try {
-              const r = await fetch(`https://api.themoviedb.org/3/movie/${tmdbId}?api_key=${process.env.TMDB_API_KEY}`, { signal: AbortSignal.timeout(4000) });
-              if (r.ok) {
-                const d = await r.json();
-                if (d.poster_path) posterUrl = `https://image.tmdb.org/t/p/w500${d.poster_path}`;
-              }
-            } catch {}
-          }
-          if (!posterUrl) {
-            try {
-              const r = await fetch(`https://www.themoviedb.org/movie/${tmdbId}`, {
-                headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36' },
-                signal: AbortSignal.timeout(4000)
-              });
-              if (r.ok) {
-                const html = await r.text();
-                const match = html.match(/<meta property="og:image" content="(https:\/\/[^"]+)"/);
-                if (match) posterUrl = match[1];
+              for (const type of ['movie', 'tv']) {
+                const r = await fetch(`https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=${process.env.TMDB_API_KEY}`, { signal: AbortSignal.timeout(4000) });
+                if (r.ok) {
+                  const d = await r.json();
+                  if (d.poster_path) {
+                    posterUrl = `https://image.tmdb.org/t/p/w500${d.poster_path}`;
+                    break;
+                  }
+                }
               }
             } catch {}
           }
@@ -195,34 +187,55 @@ export async function handleRequest(req, res) {
           }
           if (title) {
             try {
-              const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(title + ' ' + (year || '') + ' film')}&format=json`;
-              const sr = await fetch(searchUrl, { headers: { 'User-Agent': 'AfterframeApp/1.0 (contact: admin@afterframe.app)' }, signal: AbortSignal.timeout(4000) });
-              if (sr.ok) {
-                const sdata = await sr.json();
-                const hits = sdata.query?.search || [];
-                // Avoid soundtrack albums or scores
-                const filteredHits = hits.filter(h => {
-                  const t = (h.title || '').toLowerCase();
-                  return !t.includes('(soundtrack') && !t.includes('(score') && !t.includes('soundtrack)') && !t.includes('album');
-                });
-                const candidateHits = filteredHits.length > 0 ? filteredHits : hits;
-                for (const item of candidateHits.slice(0, 4)) {
-                  const pageTitle = item.title;
-                  if (pageTitle) {
+              const cleanTitle = title.replace(/\s*\(.*\)/, '').trim();
+              const searchQueries = [
+                cleanTitle + (year ? ' ' + year : ''),
+                cleanTitle + ' film',
+                cleanTitle + ' TV series'
+              ];
+              for (const q of searchQueries) {
+                if (posterUrl) break;
+                const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(q)}&format=json`;
+                const sr = await fetch(searchUrl, { headers: { 'User-Agent': 'AfterframeApp/1.0 (contact: admin@afterframe.app)' }, signal: AbortSignal.timeout(4000) });
+                if (sr.ok) {
+                  const sdata = await sr.json();
+                  const hits = (sdata.query?.search || []).filter(h => {
+                    const t = (h.title || '').toLowerCase();
+                    return !t.includes('(soundtrack') && !t.includes('(score') && !t.includes('soundtrack)') && !t.includes('album');
+                  });
+                  for (const item of hits.slice(0, 3)) {
+                    const pageTitle = item.title;
+                    if (!pageTitle) continue;
+                    // First try page summary
                     const sumUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(pageTitle)}`;
                     const sumRes = await fetch(sumUrl, { headers: { 'User-Agent': 'AfterframeApp/1.0 (contact: admin@afterframe.app)' }, signal: AbortSignal.timeout(4000) });
                     if (sumRes.ok) {
                       const sumData = await sumRes.json();
-                      if (sumData.thumbnail?.source) {
-                        const h = sumData.thumbnail.height;
-                        const w = sumData.thumbnail.width;
-                        // Theatrical cinema posters are vertical (height >= 1.2 * width)
-                        if (!h || !w || (h / w >= 1.2)) {
-                          posterUrl = sumData.thumbnail.source;
+                      const h = sumData.thumbnail?.height;
+                      const w = sumData.thumbnail?.width;
+                      if (sumData.thumbnail?.source && (!h || !w || (h / w >= 1.15))) {
+                        posterUrl = sumData.thumbnail.source;
+                        break;
+                      }
+                    }
+                    // Next try page HTML infobox image
+                    try {
+                      const artRes = await fetch(`https://en.wikipedia.org/wiki/${encodeURIComponent(pageTitle.replace(/ /g, '_'))}`, {
+                        headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)' },
+                        signal: AbortSignal.timeout(4000)
+                      });
+                      if (artRes.ok) {
+                        const html = await artRes.text();
+                        const m = html.match(/class="[^"]*infobox-image[^"]*"[^>]*>.*?<img[^>]+src="([^"]+)"/s) ||
+                                  html.match(/<table class="infobox[^>]*>.*?<img[^>]+src="([^"]+)"/s);
+                        if (m) {
+                          let u = m[1];
+                          if (u.startsWith('//')) u = 'https:' + u;
+                          posterUrl = u;
                           break;
                         }
                       }
-                    }
+                    } catch {}
                   }
                 }
               }
