@@ -1,3 +1,7 @@
+import {createStaticCache} from './server/static.mjs';
+import {createRecommender} from './server/recommendations.mjs';
+import {createDiscovery} from './server/discovery.mjs';
+import {fitPopulationPrior} from './model.mjs';
 import http from 'node:http';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -29,6 +33,8 @@ export function getPool() {
 let initPromise = null;
 let auth = null;
 let catalogueMeta = null;
+let recommender=null,discovery=null;let populationMemo=null,populationGeneration=0;
+const serveStatic=createStaticCache();
 
 export async function ensureInit() {
   if (!initPromise) {
@@ -62,6 +68,9 @@ export async function ensureInit() {
       let appOrigin = rawAppOrigin;
       try { appOrigin = new URL(rawAppOrigin).origin; } catch {}
       auth = await createAuth(p, { root, production: isProd, origin: appOrigin, runMigrations });
+      if(runMigrations)await p.query(await fs.readFile(path.join(root,'db/discovery-schema.sql'),'utf8'));await p.query('SELECT day FROM llm_daily_budget LIMIT 0');
+      recommender=await createRecommender({pool:p,root,movieSelect,getRatings,populationPrior});
+      discovery=createDiscovery({pool:p,auth,recommender});
     })().catch(err => {
       console.error('Database initialization warning:', err.message);
       initPromise = null;
@@ -71,9 +80,6 @@ export async function ensureInit() {
   return initPromise;
 }
 
-if (process.env.DATABASE_URL) {
-  ensureInit().catch(() => {});
-}
 
 const movieSelect = `SELECT id,title,year,director,genres,runtime,poster,original_title AS "originalTitle",movielens_id AS "movielensId",imdb_id AS "imdbId",tmdb_id AS "tmdbId",tags,rating_count AS "ratingCount",rating_mean::float8 AS "ratingMean",source FROM movies`;
 const hash = s => createHash('sha256').update(s).digest('hex');
@@ -106,6 +112,7 @@ async function getRatings(id) {
   return r.rows.map(r => ({ ...r, createdAt: r.createdAt.toISOString(), craft: craftScore(r.answers) }));
 }
 
+async function populationPrior(){if(populationMemo&&populationMemo.until>Date.now())return populationMemo.value;const generation=populationGeneration;const r=await getPool().query(`WITH latest AS(SELECT DISTINCT ON(r.profile_id,r.movie_id) r.id,r.profile_id,r.movie_id,r.overall,r.created_at FROM ratings r JOIN profiles p ON p.id=r.profile_id WHERE p.contribute=true ORDER BY r.profile_id,r.movie_id,r.created_at DESC) SELECT l.profile_id,l.movie_id AS "movieId",l.overall::float8,l.created_at AS "createdAt",json_agg(json_build_object('aspectId',a.aspect_id,'score',a.score)) AS answers FROM latest l JOIN answers a ON a.rating_id=l.id GROUP BY l.id,l.profile_id,l.movie_id,l.overall,l.created_at`);const groups=new Map();for(const row of r.rows){row.createdAt=row.createdAt.toISOString();if(!groups.has(row.profile_id))groups.set(row.profile_id,[]);groups.get(row.profile_id).push(row);}const value=fitPopulationPrior([...groups.values()]);if(generation===populationGeneration)populationMemo={until:Date.now()+60000,value};return value;}
 const limiter = new Map();
 
 export async function handleRequest(req, res) {
@@ -118,7 +125,9 @@ export async function handleRequest(req, res) {
 
   try {
     const url = new URL(req.url, 'http://localhost');
+    if(['GET','HEAD'].includes(req.method)&&/^\/assets\/optimized\/[a-z-]+-\d+\.[a-f0-9]{12}\.webp$/.test(url.pathname)){return await serveStatic(req,res,path.join(root,'public',url.pathname),'.webp');}
     await ensureInit();
+    if(req.method!=='GET'&&url.pathname.startsWith('/api/')&&url.pathname!=='/api/discover')res.once('finish',()=>{populationGeneration++;populationMemo=null;recommender.invalidate();});
     const p = getPool();
 
     if (url.pathname.startsWith('/api/')) {
@@ -127,6 +136,7 @@ export async function handleRequest(req, res) {
       if (req.method !== 'GET') {
         await auth.assertMutation(req);
         const origin = req.headers.origin;
+        const host=req.headers.host;
         const proto = req.headers['x-forwarded-proto'] || 'http';
         const rawExpected = process.env.APP_ORIGIN || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : `${proto}://${host}`);
         let expected = rawExpected;
@@ -151,7 +161,7 @@ export async function handleRequest(req, res) {
           const existing = await p.query('SELECT poster FROM movies WHERE id=$1', [movieId]);
           if (existing.rows[0]?.poster) {
             res.setHeader('Cache-Control', 'public, max-age=86400');
-            return send(res, 200, { poster: existing.rows[0].poster });
+            res.writeHead(200,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'public, max-age=86400, s-maxage=86400'});res.end(JSON.stringify({poster:existing.rows[0].poster}));return;
           }
         }
 
@@ -236,11 +246,12 @@ export async function handleRequest(req, res) {
 
         if (!posterUrl) return send(res, 404, { error: 'Poster not found.' });
         res.setHeader('Cache-Control', 'public, max-age=86400');
-        return send(res, 200, { poster: posterUrl });
+        res.writeHead(200,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'public, max-age=86400, s-maxage=86400'});res.end(JSON.stringify({poster:posterUrl}));recommender.invalidate();return;
       }
 
       const id = await profile(req, res);
       if (req.method !== 'GET') {
+        if(url.pathname!=='/api/discover'){populationGeneration++;populationMemo=null;recommender.invalidate();}
         const now = Date.now();
         const entry = limiter.get(id) || { t: now, n: 0 };
         if (now - entry.t > 60000) { entry.t = now; entry.n = 0; }
@@ -249,9 +260,10 @@ export async function handleRequest(req, res) {
         if (entry.n > 60) return send(res, 429, { error: 'Please wait a moment before trying again.' });
       }
 
+      if(req.method==='POST'&&url.pathname==='/api/discover')return send(res,200,await discovery.run(req,id,await body(req)));
       if (req.method === 'GET' && url.pathname === '/api/state') {
         const [movies, ratings, watchlist, pr] = await Promise.all([
-          p.query(movieSelect + ' ORDER BY rating_count DESC,title'),
+          recommender.films().then(f=>({rows:f.movies})),
           getRatings(id),
           p.query('SELECT movie_id FROM watchlist WHERE profile_id=$1', [id]),
           p.query('SELECT contribute FROM profiles WHERE id=$1', [id])
@@ -262,6 +274,7 @@ export async function handleRequest(req, res) {
           movies: movies.rows,
           ratings,
           catalogue: catalogueMeta,
+          languageAssistanceConfigured:discovery.configured,
           watchlist: watchlist.rows.map(r => r.movie_id),
           contribute: pr.rows[0].contribute
         });
@@ -340,29 +353,7 @@ export async function handleRequest(req, res) {
         return send(res, 200, { ok: true });
       }
 
-      if (req.method === 'GET' && url.pathname === '/api/taste') {
-        const own = await getRatings(id);
-        const taste = fitTaste(own);
-        let recommendations = [];
-        if (taste.ready) {
-          const aggregate = await p.query(`WITH latest AS(SELECT DISTINCT ON(r.profile_id,r.movie_id) r.id,r.movie_id FROM ratings r JOIN profiles p ON p.id=r.profile_id WHERE p.contribute=true AND r.profile_id<>$1 ORDER BY r.profile_id,r.movie_id,r.created_at DESC) SELECT l.movie_id,a.aspect_id,avg(a.score)::float8 AS score,count(*)::integer AS sample FROM latest l JOIN answers a ON a.rating_id=l.id WHERE a.score IS NOT NULL GROUP BY l.movie_id,a.aspect_id HAVING count(*)>=3`, [id]);
-          const grouped = new Map();
-          for (const a of aggregate.rows) {
-            if (!grouped.has(a.movie_id)) grouped.set(a.movie_id, []);
-            grouped.get(a.movie_id).push(a);
-          }
-          const seen = new Set(own.map(r => r.movieId));
-          for (const [mid, as] of grouped) {
-            if (seen.has(mid) || !modelAspectIds.every(midId => as.some(a => a.aspect_id === midId))) continue;
-            const score = taste.intercept + taste.weights.reduce((s, w) => s + w.coefficient * as.find(a => a.aspect_id === w.id).score, 0);
-            recommendations.push({ movieId: mid, predicted: Math.max(0.5, Math.min(5, score)), sample: Math.min(...as.map(a => a.sample)), reason: 'Estimated from your craft associations and opt-in viewers’ aspect scores. Not a certainty.' });
-          }
-          recommendations.sort((a, b) => b.predicted - a.predicted);
-        }
-        const films = (await p.query(movieSelect)).rows;
-        const early = earlyRecommendations(buildFilmIndex(films), own);
-        return send(res, 200, { ...taste, recommendations: recommendations.slice(0, 8), earlyRecommendations: early, catalogue: catalogueMeta });
-      }
+      if(req.method==='GET'&&url.pathname==='/api/taste'){const t=await recommender.profile(id);return send(res,200,{...t.public,catalogue:catalogueMeta});}
 
       if (req.method === 'GET' && url.pathname === '/api/export') {
         const acct = await auth.requireAccount(req);
@@ -398,19 +389,7 @@ export async function handleRequest(req, res) {
     const full = path.resolve(root, 'public', '.' + rel);
     if (!full.startsWith(path.join(root, 'public') + path.sep)) return send(res, 403, { error: 'Forbidden.' });
     const ext = path.extname(full);
-    const content = await fs.readFile(full);
-    res.writeHead(200, {
-      'Content-Type': ({
-        '.html': 'text/html; charset=utf-8',
-        '.js': 'text/javascript; charset=utf-8',
-        '.css': 'text/css; charset=utf-8',
-        '.jpg': 'image/jpeg',
-        '.png': 'image/png',
-        '.svg': 'image/svg+xml'
-      }[ext] || 'application/octet-stream'),
-      'Cache-Control': 'no-cache'
-    });
-    res.end(content);
+    await serveStatic(req,res,full,ext);
   } catch (e) {
     if (e instanceof AuthError) return send(res, e.status, { error: e.message, code: e.code });
     const status = e.code === 'ENOENT' ? 404 : e.status || 400;

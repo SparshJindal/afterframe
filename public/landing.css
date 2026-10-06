@@ -2,3 +2,5 @@
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation:none!important;transition:none!important}.floating-film{translate:none}}
 
 #motion-toggle:disabled{cursor:default;opacity:.85}
+/* Intrinsic width/height attributes reserve space without overriding the composition crop. */
+.floating-film img{height:auto}

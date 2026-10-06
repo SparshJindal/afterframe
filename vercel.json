@@ -5,7 +5,13 @@
       "src": "api/index.mjs",
       "use": "@vercel/node",
       "config": {
-        "includeFiles": ["catalogue/**", "db/**", "data.mjs", "public/**", "server/**"]
+        "includeFiles": [
+          "catalogue/**",
+          "db/**",
+          "data.mjs",
+          "public/**",
+          "server/**"
+        ]
       }
     },
     {
@@ -14,6 +20,10 @@
     }
   ],
   "routes": [
+    {
+      "src": "/assets/optimized/([a-z-]+-[0-9]+\\.[a-f0-9]{12}\\.webp)",
+      "dest": "api/index.mjs"
+    },
     {
       "src": "/api/(.*)",
       "dest": "api/index.mjs"
