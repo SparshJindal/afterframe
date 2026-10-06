@@ -1,107 +1,44 @@
-# Afterframe v1.2 — verified accounts and a public landing
+# Afterframe 1.3
 
-The public entry is `/`; the existing journal is `/app` and requires a verified account. Apply the included account documentation before production. Local signup/recovery mail is delivered privately into `.dev-mail/`, not to a live inbox. The current HTML bundler creates a landing/UI preview only; it cannot create an account or log movies.
+Repository-specific deployment adaptations and existing authentication policy are documented in [docs/GITHUB-INTEGRATION-1.3.md](docs/GITHUB-INTEGRATION-1.3.md). Read that alongside the baseline release guide before deployment.
 
-See `docs/AUTH-ARCHITECTURE.md` and `docs/LOCAL-AND-PRODUCTION.md` for the account design and deployment prerequisites. The catalogue, scoring and recommendation notes below remain applicable; legacy anonymous-profile assumptions do not.
+An editorial film journal with a public cinematic landing, verified accounts, PostgreSQL-owned reviews, eight anchored cinema questions, and separate overall enjoyment ratings.
 
-# Afterframe
-**Look a little closer.** A working film journal with a populated movie catalogue and first-review recommendations.
+## This release
 
-**Data licence:** the bundled MovieLens catalogue and derived rating aggregates are for research/prototyping under the original GroupLens terms. Commercial or revenue-bearing use requires permission. The complete original licence is in `catalogue/MOVIELENS-LICENSE.txt`. Do not assume this dataset is cleared for a commercial launch.
+1. Responsive WebP posters, content-hashed immutable public caching, ETag/304 and a bounded public asset cache.
+2. Dynamic nonnegative preference regression anchored to conservative/opt-in population priors. Constant aspects retain a prior; evidence is labelled. The equal-weight rubric stays stable.
+3. Hybrid metadata + historical item-item collaboration + genuine opt-in craft predictions. Eight unseen, diversified picks with grounded explanations.
+4. Authenticated conversational discovery. Local rules work without keys; optional OpenAI structured filters require explicit user consent, server configuration, validation and budget/rate controls.
 
-## Run it
-Requires Node.js 22+ (24 recommended). From this folder:
+**Start with [docs/UPGRADE-1.3.md](docs/UPGRADE-1.3.md).** It explains exact algorithms, evidence gates, privacy, deployment, migration, CDN setup, limitations, rollback and evaluation design. See [docs/VERIFICATION-1.3.md](docs/VERIFICATION-1.3.md) for release tests.
 
-```sh
-npm ci
-npm run dev
-```
+## Run
 
-Open **http://localhost:3000**. `npm run dev` starts a **real local PostgreSQL server** on port 55432, applies the schema, imports 9,742 MovieLens films and retains the four featured films (two overlap, so a fresh catalogue contains 9,744 films) and launches the web app. It is not SQLite and is not an in-memory fake database. Data persists in `.postgres/`. The embedded development database is for local use only; its known development password must never be used for hosting. Ctrl+C stops the app and database. The embedded runtime downloads a PostgreSQL binary through npm and is supported on common Linux/macOS/Windows architectures; it must not run as root.
+Node 22+ (24 preferred), PostgreSQL. Install dependencies with `npm ci`.
 
-### Use your own PostgreSQL
-```sh
-npm ci --omit=dev
-export DATABASE_URL='postgresql://USER:PASSWORD@HOST:5432/afterframe'
-export PORT=3000
-npm start
-```
-The schema is applied at startup. For a managed database requiring TLS, set `PGSSL=true`; certificates remain verified. The backend never exposes database credentials to the browser.
+- Development: `npm run dev` starts an embedded local PostgreSQL database and the app on loopback. On minimal Linux, the embedded package may require its native library directory in LD_LIBRARY_PATH; using an installed PostgreSQL or Docker is an alternative.
+- Existing DB: set DATABASE_URL, APP_ORIGIN and PORT, then `npm start`. Copy `.env.example` values into your environment/secret manager; this app does not automatically load a .env file when run directly with Node.
+- Production: HTTPS APP_ORIGIN, a random AUTH_SECRET, verified sender MAIL_FROM and real RESEND_API_KEY are required. See [docs/LOCAL-AND-PRODUCTION.md](docs/LOCAL-AND-PRODUCTION.md) and [docs/AUTH-ARCHITECTURE.md](docs/AUTH-ARCHITECTURE.md). Use a controlled migration role, not runtime DDL.
+- Upgrading v1.2: run `db/discovery-schema.sql` with your migration role before restarting. Existing accounts/reviews remain intact. No fabricated users or reviews are seeded.
 
-### Docker alternative
-```sh
-export POSTGRES_PASSWORD='a-long-unique-local-password'
-docker compose up --build
-```
-Open http://localhost:3000. PostgreSQL has a persistent named volume and no published database port. This compose configuration is for local HTTP, not an Internet-facing production deployment.
+Routes: `/` public landing; `/app` verified journal; `/api/discover` verified + CSRF-protected discovery. Anonymous users cannot log movies, change watchlists, edit profiles or export journals. Passwords reject emoji sequences server-side/client-side without banning normal digits, #, * or printable international letters. Private ownership is derived from the authenticated server session.
 
-## What works
-- Responsive editorial interface, real film imagery, generated camera mascot and an interactive floating field-note card. Motion respects reduced-motion preferences.
-- Journal, searchable 9,744-film initial library with genre filtering, 24-item pagination, custom film entries and a persistent watchlist.
-- Immediate metadata-based recommendations after a review, with reasons, exclusion of watched films and separate public-rating evidence.
-- First: overall enjoyment, 0.5–5, in half-star steps. Then eight aspect questions, 0–4, with fixed anchors, explicit N/A/unsure choices and optional evidence notes.
-- Per-device draft recovery, back navigation, viewing dates, spoiler notes and a final comparison of instinct versus rubric score.
-- Transactional PostgreSQL writes, server-side validation and database constraints. Client entry IDs allow retrying committed writes without creating a second entry.
-- Read/delete entries, log rewatches, export JSON, delete all private profile data.
-- Individual answers retain the aspect and rubric version for future research. No aspect is silently turned into a zero when skipped.
-- Private browser profiles, opt-in aggregate recommendation contributions and an exploratory preference model.
+Optional LLM: disabled by default. To activate configure LLM_ENABLED=true, OPENAI_API_KEY, LLM_MODEL and LLM_DAILY_REQUEST_LIMIT server-side. The user must separately opt in. No key is included, no real provider call is needed for the ordinary app, and provider failures have a local fallback. Never expose secrets in browser code.
 
-## Data model
-The `movies` table includes MovieLens ID, IMDb ID, TMDB ID, original title, genres, tags, source release, historical rating count and mean. `catalogue_imports` records source metadata and import version. Source-file SHA-256 hashes are recorded in `catalogue/source.json`. Importing is transactional and idempotent by stable IDs/version; it does not replace existing private reviews. Startup requires no external API key. `GET /api/movies?q=…&genre=…&limit=24&offset=0` supports bounded SQL search. The interface uses a cached catalogue for instant paginated filtering.
+## Tests and generated assets
 
-`profiles` → `ratings` → `answers`. Each rating stores movie, overall enjoyment, viewing date, spoiler flag and rubric version. Each answer stores aspect ID, 0–4 score or a specific skip reason, and a private note. `question_versions` stores the historical prompt/label identity. `movies`, `watchlist` and hashed `sessions` are separate tables. Private profile deletion cascades to entries, answers, watchlist and sessions. Shared catalogue records remain.
+Start a disposable local development instance, then `npm test`. Never use production for fixture tests. Browser QA: install Playwright Chromium, then `node test-upgrades-ui.mjs` (or set CHROMIUM_PATH to a local browser).
 
-The rubric is version 1: story, characters, performance, visuals, sound, editing, ideas and personal impact. Score = mean of scored aspects × 1.25. At least four scored aspects are required; incomplete profiles are labelled. The overall rating is always stored independently, not overwritten by the calculated score.
+- `npm run images`: regenerate optimized public artwork/hash manifest and refresh existing static references. Review markup when dimensions/layouts change. Retain old hashed assets for cache lifetime.
+- `npm run assets && npm run bundle`: self-contained **landing/UI preview only**. It cannot create accounts or provide an offline fake journal.
+- `python scripts/build-collaborative.py /path/to/ml-latest-small/ratings.csv`: rebuild historical aggregate neighbors; NumPy is build-time only.
+- `python scripts/build_catalogue.py /path/to/ml-latest-small`: rebuild sourced catalogue metadata.
 
-## First-review recommendations
-The MovieLens latest-small September 2018 catalogue contains 9,742 films, 100,836 ratings and 3,683 tag applications. Only movie metadata and anonymous **movie-level aggregates** are imported—not MovieLens people, private profile IDs or fake Afterframe reviews. Director, runtime and artwork are not provided by this import; absent fields remain absent and are labelled honestly. Known featured artwork/directors are preserved.
+## Data and limitations
 
-After a positive review (overall ≥3.5), early recommendations compare sourced genre/tag metadata using inverse-frequency-weighted overlap. A shrunk public overall-rating prior breaks weak ties; lower-rated films down-weight similar metadata. Mild diversification reduces repetition. Films already reviewed are excluded. Candidates require at least five source ratings. Neutral, negative or metadata-free histories get explicitly labelled community discovery—not a pretended personal preference.
+The historical MovieLens latest-small catalogue has 9,742 films and 100,836 ratings, plus the app's featured/new films. Historical coverage is through 2018, not a current movie feed. Missing posters/directors/runtimes stay missing and are labelled. Historical ratings supply metadata/community/collaborative signals, **not** invented craft scores.
 
-Early recommendations do not assign acting/editing/sound scores to unseen films, do not show a fabricated predicted personal rating and do not treat MovieLens stars as aspect answers. When supported craft-model estimates are available, those are shown first with separate labels; metadata picks fill remaining slots.
+Read `catalogue/MOVIELENS-LICENSE.txt` before use. This is a research-use source; commercial use needs permission. Source metadata is in `catalogue/source.json` and the collaborative artifact records its method and aggregate counts. No historical individual viewer rows are distributed in that artifact.
 
-The current historical source does not cover all releases, languages or countries. Add missing films manually. New manually added films without genre/tag enrichment cannot produce a strong content profile. A commercially licensed metadata provider and catalogue updates are future integration work.
-
-## Aspect-based recommendation baseline
-1. Use only the latest viewing of each distinct film; rewatches do not inflate the training count.
-2. Require 12 distinct films with all seven craft aspects scored, and at least a one-star spread in overall ratings.
-3. Fit centred, non-negative ridge regression against overall enjoyment, with regularisation 0.65. Personal impact is excluded from predictors because it overlaps with the outcome.
-4. Show normalised positive coefficients as **experimental associations**, not causal preferences or objective importance. Before training readiness, show aspect averages, explicitly not preferences.
-5. For an unseen film, require at least three other opt-in profiles for **every** craft aspect. Average their latest ratings, then apply the viewer’s model to estimate enjoyment. Notes are never returned by the recommendation endpoint. Contributions are off by default; opt-out takes effect on the next query.
-
-There are no fabricated community ratings or example user reviews in the delivered app. The featured shelf is curated; initial personalised picks are separately labelled metadata matches. The threshold is a conservative UX gate, not a statistical guarantee. The model needs offline evaluation, holdout tests, uncertainty calibration and collaborative filtering before being sold as accurate personalisation. It currently assumes positive, approximately linear associations. Correlated self-reported aspects can still confound it.
-
-## Preview versus authenticated app
-The separate `Afterframe-landing-preview.html` is a visual landing/auth-dialog preview. It deliberately cannot create an account, authenticate, save a password or log a movie. The patched main app runs at `/app` through the Node backend and requires a verified account. The old v1.1 localStorage-only preview is not an authenticated product and must not be used as a login bypass.
-
-Build the new landing preview with `npm run bundle`. Real accounts and journal operations require PostgreSQL and the server. Read `docs/LOCAL-AND-PRODUCTION.md` for verification mail and deployment setup.
-
-## Test
-Start `npm run dev` in one terminal, then:
-```sh
-npm test
-```
-Tests cover rubric math, skip handling, invalid dates/scores, duplicate aspects, insufficient data, rewatch deduplication, synthetic preference recovery, real database roundtrips, ownership isolation, exports, watchlist, deletion, CSRF, opt-in and recommendation evidence gates. API tests create and remove temporary profiles. The recommendation test also cleans temporary catalogue fixtures using the development database URL. Set `TEST_URL` and `TEST_DATABASE_URL` together if testing another non-production instance. **Never run mutation tests against real user data.**
-
-## Before public launch
-This is a functioning private-browser MVP, **not a finished public social network**. It now has verified-email password accounts, revocable sessions and recovery; MFA, public/social profiles and avatar uploads are not implemented. A verified account owns the journal. Signing in again restores access; browser cookies are sessions, not the account identity. HttpOnly/SameSite cookies, ownership-scoped reads, escaping, parameterised SQL, request limits and restrictive script CSP are included, but they do not replace production authentication.
-
-Before public hosting:
-- Review the implemented authentication/recovery baseline and add production MFA/abuse defenses. Do not treat anonymous browser profiles as robust independent viewers.
-- Use HTTPS; set `NODE_ENV=production`, `APP_ORIGIN=https://your-domain`, a unique managed `DATABASE_URL`, and proper TLS as needed. Secure cookies are enabled in production. Never use the local database password.
-- Add IP-level distributed rate limits, catalogue moderation, anti-Sybil protections, structured migrations, backup/restore drills, monitoring, privacy policy and retention rules.
-- Obtain the appropriate licence/permissions for film artwork and metadata; consider a properly attributed TMDB integration.
-- Evaluate recommendation quality and uncertainty. The prototype requires opt-in numerical contributions but has no public profiles or public review sharing.
-
-## Artwork
-Film posters and the Interstellar still were downloaded from the TMDB image CDN for this prototype. Artwork remains the property of respective rights holders. This app is not endorsed or certified by TMDB. Attribution is also visible under **The method**. The original camera doodle was AI-generated for Afterframe; the transparent version is a cleaned crop of that image. The wordmark and favicon are code-native graphics.
-
-## Stack
-Vanilla JavaScript ES modules, CSS, Node’s HTTP server, `pg`, PostgreSQL. No frontend framework or build service is needed. The small dependency surface is intentional. Docker configuration and a reproducible npm lockfile are included.
-
-## Rebuild the sourced catalogue
-Download the official `ml-latest-small.zip` from https://grouplens.org/datasets/movielens/, unzip it, then run:
-```sh
-python scripts/build_catalogue.py /path/to/ml-latest-small
-```
-This recreates the transformed metadata, source hashes and licence files. Startup imports the packaged data automatically. The version check prevents duplicate startup imports. For a new source release, update the recorded source version as part of a deliberate migration rather than treating a constant label as freshness. The currently packaged source is the 2018 release, not a current-release feed.
+The personal model is experimental, not a proven causal account of taste. No held-out recommendation accuracy, production load capacity, live LLM billing, CDN rollout, Docker production deployment or independent security audit is claimed. Asset/model caches are process-local; multi-replica deployment needs deliberate proxy configuration and shared invalidation. Full initial catalogue loading is still an optimization opportunity.

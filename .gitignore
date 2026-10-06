@@ -4,3 +4,10 @@ node_modules/
 *.log
 
 .dev-mail/
+
+.afterframe-patch-backups/
+
+qa-output/
+
+# Generated exact-byte artwork is tracked as .b64 for connector-compatible commits.
+public/assets/optimized/*.webp

@@ -1,6 +1,6 @@
 {
   "name": "afterframe",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "private": true,
   "type": "module",
   "description": "A considered film journal with PostgreSQL-backed aspect ratings.",
@@ -8,7 +8,9 @@
     "start": "node server.mjs",
     "dev": "node dev.mjs",
     "test": "node --test test/*.test.mjs",
-    "bundle": "node bundle.mjs"
+    "bundle": "node bundle.mjs",
+    "images": "node scripts/build-images.mjs",
+    "assets": "node scripts/materialize-assets.mjs"
   },
   "engines": {
     "node": ">=22"
@@ -18,6 +20,8 @@
     "pg": "^8.23.1"
   },
   "devDependencies": {
-    "embedded-postgres": "^18.4.0-beta.17"
+    "embedded-postgres": "^18.4.0-beta.17",
+    "playwright": "^1.63.0",
+    "sharp": "^0.34.5"
   }
 }
