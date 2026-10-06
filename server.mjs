@@ -1,6 +1,7 @@
 import {createStaticCache} from './server/static.mjs';
 import {createRecommender} from './server/recommendations.mjs';
 import {createDiscovery} from './server/discovery.mjs';
+import {createSocial} from './server/social.mjs';
 import {fitPopulationPrior} from './model.mjs';
 import http from 'node:http';
 import fs from 'node:fs/promises';
@@ -33,7 +34,7 @@ export function getPool() {
 let initPromise = null;
 let auth = null;
 let catalogueMeta = null;
-let recommender=null,discovery=null;let populationMemo=null,populationGeneration=0;
+let recommender=null,discovery=null,social=null;let populationMemo=null,populationGeneration=0;
 const serveStatic=createStaticCache();
 
 export async function ensureInit() {
@@ -71,6 +72,9 @@ export async function ensureInit() {
       if(runMigrations)await p.query(await fs.readFile(path.join(root,'db/discovery-schema.sql'),'utf8'));await p.query('SELECT day FROM llm_daily_budget LIMIT 0');
       recommender=await createRecommender({pool:p,root,movieSelect,getRatings,populationPrior});
       discovery=createDiscovery({pool:p,auth,recommender});
+      if(runMigrations)await p.query(await fs.readFile(path.join(root,'db/social-schema.sql'),'utf8'));
+      await p.query('SELECT id FROM friend_connections LIMIT 0');
+      social=createSocial({pool:p,auth,body,send});
     })().catch(err => {
       console.error('Database initialization warning:', err.message);
       initPromise = null;
@@ -127,7 +131,7 @@ export async function handleRequest(req, res) {
     const url = new URL(req.url, 'http://localhost');
     if(['GET','HEAD'].includes(req.method)&&/^\/assets\/optimized\/[a-z-]+-\d+\.[a-f0-9]{12}\.webp$/.test(url.pathname)){return await serveStatic(req,res,path.join(root,'public',url.pathname),'.webp');}
     await ensureInit();
-    if(req.method!=='GET'&&url.pathname.startsWith('/api/')&&url.pathname!=='/api/discover')res.once('finish',()=>{populationGeneration++;populationMemo=null;recommender.invalidate();});
+    if(req.method!=='GET'&&url.pathname.startsWith('/api/')&&url.pathname!=='/api/discover'&&!url.pathname.startsWith('/api/social/'))res.once('finish',()=>{populationGeneration++;populationMemo=null;recommender.invalidate();});
     const p = getPool();
 
     if (url.pathname.startsWith('/api/')) {
@@ -146,6 +150,8 @@ export async function handleRequest(req, res) {
         if (req.headers['sec-fetch-site'] === 'cross-site') return send(res, 403, { error: 'Cross-site request blocked.' });
         if (req.method !== 'DELETE' && !req.headers['content-type']?.startsWith('application/json')) return send(res, 415, { error: 'Send application/json.' });
       }
+
+      if (await social.handle(req,res,url)) return;
 
       if (url.pathname === '/api/health') {
         await p.query('SELECT 1');
