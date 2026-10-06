@@ -1277,6 +1277,23 @@ export const MOVIELENS_POSTER_PATCHES = {
 
 export const CURATED_ADDITIONS = [
   {
+    id: 'ford-v-ferrari',
+    title: 'Ford v Ferrari',
+    originalTitle: 'Ford v Ferrari (2019)',
+    year: 2019,
+    director: 'James Mangold',
+    genres: ['Action', 'Biography', 'Drama', 'Sport'],
+    runtime: 152,
+    poster: 'https://upload.wikimedia.org/wikipedia/en/a/a4/Ford_v._Ferrari_%282019_film_poster%29.png',
+    movielensId: null,
+    imdbId: 'tt1950186',
+    tmdbId: 359724,
+    tags: ['racing', 'le mans', 'carroll shelby', 'ken miles', 'matt damon', 'christian bale', 'gt40', 'ford', 'ferrari', 'motorsport', '7000 rpm'],
+    ratingCount: 450,
+    ratingMean: 4.8,
+    source: 'Curated Modern Cinema'
+  },
+  {
     id: 'knives-out',
     title: 'Knives Out',
     originalTitle: 'Knives Out (2019)',
@@ -2797,7 +2814,7 @@ export async function runImport() {
 
   // Update source metadata
   const source = JSON.parse(fs.readFileSync(sourcePath, 'utf8'));
-  source.version = '2018-09-26-knives-out-v7';
+  source.version = '2018-09-26-ford-ferrari-v8';
   source.movieCount = updatedMovies.length;
   source.bollywoodCount = BOLLYWOOD_MOVIES.length;
   fs.writeFileSync(sourcePath, JSON.stringify(source, null, 2), 'utf8');
