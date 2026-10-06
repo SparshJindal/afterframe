@@ -861,6 +861,223 @@ export const BOLLYWOOD_MOVIES = [
 
 // Verified artwork & director fixes for famous MovieLens catalogue titles
 export const MOVIELENS_POSTER_PATCHES = {
+  'ml-88129': {
+      "director": "Nicolas Winding Refn",
+      "runtime": 100,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/1/13/Drive2011Poster.jpg"
+  },
+  'ml-88140': {
+      "director": "Joe Johnston",
+      "runtime": 124,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/3/37/Captain_America_The_First_Avenger_poster.jpg"
+  },
+  'ml-59315': {
+      "director": "Jon Favreau",
+      "runtime": 126,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/0/02/Iron_Man_%282008_film%29_poster.jpg"
+  },
+  'ml-77561': {
+      "director": "Jon Favreau",
+      "runtime": 124,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/e/ed/Iron_Man_2_poster.jpg"
+  },
+  'ml-102125': {
+      "director": "Shane Black",
+      "runtime": 130,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/1/19/Iron_Man_3_poster.jpg"
+  },
+  'ml-60040': {
+      "director": "Louis Leterrier",
+      "runtime": 112,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/f/f0/The_Incredible_Hulk_%28film%29_poster.jpg"
+  },
+  'ml-86332': {
+      "director": "Kenneth Branagh",
+      "runtime": 115,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/9/95/Thor_%28film%29_poster.jpg"
+  },
+  'ml-106072': {
+      "director": "Alan Taylor",
+      "runtime": 112,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/7/7f/Thor_The_Dark_World_poster.jpg"
+  },
+  'ml-122916': {
+      "director": "Taika Waititi",
+      "runtime": 130,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/7/7d/Thor_Ragnarok_poster.jpg"
+  },
+  'ml-110102': {
+      "director": "Anthony and Joe Russo",
+      "runtime": 136,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/9/9e/Captain_America_The_Winter_Soldier_poster.jpg"
+  },
+  'ml-122920': {
+      "director": "Anthony and Joe Russo",
+      "runtime": 147,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/5/53/Captain_America_Civil_War_poster.jpg"
+  },
+  'ml-89745': {
+      "director": "Joss Whedon",
+      "runtime": 143,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/8/8a/The_Avengers_%282012_film%29_poster.jpg"
+  },
+  'ml-122892': {
+      "director": "Joss Whedon",
+      "runtime": 141,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/f/ff/Avengers_Age_of_Ultron_poster.jpg"
+  },
+  'ml-122912': {
+      "director": "Anthony and Joe Russo",
+      "runtime": 149,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/4/4d/Avengers_Infinity_War_poster.jpg"
+  },
+  'ml-112852': {
+      "director": "James Gunn",
+      "runtime": 121,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/3/33/Guardians_of_the_Galaxy_%28film%29_poster.jpg"
+  },
+  'ml-122918': {
+      "director": "James Gunn",
+      "runtime": 136,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/3/32/Guardians_of_the_Galaxy_Vol._2_poster.jpg"
+  },
+  'ml-122900': {
+      "director": "Peyton Reed",
+      "runtime": 117,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/1/12/Ant-Man_%28film%29_poster.jpg"
+  },
+  'ml-188301': {
+      "director": "Peyton Reed",
+      "runtime": 118,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/2/2c/Ant-Man_and_the_Wasp_poster.jpg"
+  },
+  'ml-122922': {
+      "director": "Scott Derrickson",
+      "runtime": 115,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/a/a1/Doctor_Strange_%282016_film%29_poster.jpg"
+  },
+  'ml-122906': {
+      "director": "Ryan Coogler",
+      "runtime": 134,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/d/d6/Black_Panther_%28film%29_poster.jpg"
+  },
+  'ml-122926': {
+      "title": "Spider-Man: Homecoming",
+      "director": "Jon Watts",
+      "runtime": 133,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/f/f9/Spider-Man_Homecoming_poster.jpg"
+  },
+  'ml-122904': {
+      "director": "Tim Miller",
+      "runtime": 108,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/2/23/Deadpool_%282016_poster%29.png"
+  },
+  'ml-187593': {
+      "director": "David Leitch",
+      "runtime": 119,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/c/cf/Deadpool_2_poster.jpg"
+  },
+  'ml-168252': {
+      "director": "James Mangold",
+      "runtime": 137,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/3/37/Logan_2017_poster.jpg"
+  },
+  'ml-3793': {
+      "director": "Bryan Singer",
+      "runtime": 104,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/8/81/X-MenfilmPoster.jpg"
+  },
+  'ml-6333': {
+      "director": "Bryan Singer",
+      "runtime": 134,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/3/3e/X2_poster.jpg"
+  },
+  'ml-45499': {
+      "director": "Brett Ratner",
+      "runtime": 104,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/5/5b/X-Men_The_Last_Stand_theatrical_poster.jpg"
+  },
+  'ml-87232': {
+      "director": "Matthew Vaughn",
+      "runtime": 132,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/5/55/X-MenFirstClassMoviePoster.jpg"
+  },
+  'ml-111362': {
+      "director": "Bryan Singer",
+      "runtime": 131,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/0/0c/X-Men_Days_of_Future_Past_poster.jpg"
+  },
+  'ml-122924': {
+      "director": "Bryan Singer",
+      "runtime": 144,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/0/04/X-Men_-_Apocalypse.jpg"
+  },
+  'ml-68319': {
+      "director": "Gavin Hood",
+      "runtime": 107,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/0/08/X-Men_Origins_Wolverine_theatrical_poster.jpg"
+  },
+  'ml-103772': {
+      "director": "James Mangold",
+      "runtime": 126,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/7/74/The_Wolverine_posterUS.jpg"
+  },
+  'ml-5349': {
+      "director": "Sam Raimi",
+      "runtime": 121,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/6/6c/Spider-Man_%282002_film%29_poster.jpg"
+  },
+  'ml-8636': {
+      "director": "Sam Raimi",
+      "runtime": 127,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/4/4e/Spider-Man_2_USA_poster.jpg"
+  },
+  'ml-52722': {
+      "director": "Sam Raimi",
+      "runtime": 139,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/7/7a/Spider-Man_3%2C_International_Poster.jpg"
+  },
+  'ml-95510': {
+      "director": "Marc Webb",
+      "runtime": 136,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/e/e0/The_Amazing_Spider-Man_%28film%29_poster.jpg"
+  },
+  'ml-110553': {
+      "director": "Marc Webb",
+      "runtime": 142,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/2/24/The_Amazing_Spider-Man_2_poster.jpg"
+  },
+  'ml-2167': {
+      "director": "Stephen Norrington",
+      "runtime": 120,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/1/19/Blade_movie.jpg"
+  },
+  'ml-5254': {
+      "director": "Guillermo del Toro",
+      "runtime": 117,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/6/6d/Blade_II_movie.jpg"
+  },
+  'ml-8985': {
+      "director": "David S. Goyer",
+      "runtime": 113,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/8/86/Blade_Trinity_poster.JPG"
+  },
+  'ml-6157': {
+      "director": "Mark Steven Johnson",
+      "runtime": 103,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/0/04/Daredevil_poster.JPG"
+  },
+  'ml-34150': {
+      "director": "Tim Story",
+      "runtime": 106,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/4/4a/Fantastic_Four_poster.jpg"
+  },
+  'ml-53464': {
+      "director": "Tim Story",
+      "runtime": 92,
+      "poster": "https://upload.wikimedia.org/wikipedia/en/e/e6/Fantastic_Four_2_Poster.jpg"
+  },
+
   'ml-106918': {
     director: 'Ben Stiller',
     runtime: 114,
@@ -996,11 +1213,6 @@ export const MOVIELENS_POSTER_PATCHES = {
     runtime: 128,
     poster: 'https://upload.wikimedia.org/wikipedia/en/a/ab/La_La_Land_%28film%29.png'
   },
-  'ml-88140': {
-    director: 'Nicolas Winding Refn',
-    runtime: 100,
-    poster: 'https://upload.wikimedia.org/wikipedia/en/1/13/Drive2011Poster.jpg'
-  },
   'ml-122882': {
     director: 'George Miller',
     runtime: 120,
@@ -1064,6 +1276,1016 @@ export const MOVIELENS_POSTER_PATCHES = {
 };
 
 export const CURATED_ADDITIONS = [
+  {
+    "id": "mcu-loki",
+    "title": "Loki",
+    "originalTitle": "Loki (2021)",
+    "year": 2021,
+    "director": "Michael Waldron & Kate Herron",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Fantasy",
+      "Science fiction"
+    ],
+    "runtime": 52,
+    "poster": "https://upload.wikimedia.org/wikipedia/en/c/c9/Loki_season_1_poster.jpeg",
+    "movielensId": null,
+    "imdbId": "tt9140554",
+    "tmdbId": 84958,
+    "tags": [
+      "mcu",
+      "marvel",
+      "loki",
+      "multiverse",
+      "tva",
+      "tom hiddleston",
+      "mobius",
+      "glorious purpose",
+      "time travel",
+      "sylvie",
+      "god of stories"
+    ],
+    "ratingCount": 420,
+    "ratingMean": 4.8,
+    "source": "Marvel Cinematic Universe"
+  },
+  {
+    "id": "mcu-wandavision",
+    "title": "WandaVision",
+    "originalTitle": "WandaVision (2021)",
+    "year": 2021,
+    "director": "Jac Schaeffer & Matt Shakman",
+    "genres": [
+      "Comedy",
+      "Drama",
+      "Fantasy",
+      "Mystery",
+      "Science fiction"
+    ],
+    "runtime": 35,
+    "poster": "https://upload.wikimedia.org/wikipedia/en/a/a2/WandaVision_%22The_Series_Finale%22_poster.jpg",
+    "movielensId": null,
+    "imdbId": "tt9140560",
+    "tmdbId": 85271,
+    "tags": [
+      "mcu",
+      "marvel",
+      "scarlet witch",
+      "vision",
+      "westview",
+      "grief",
+      "sitcom",
+      "agatha harkness",
+      "hex"
+    ],
+    "ratingCount": 390,
+    "ratingMean": 4.7,
+    "source": "Marvel Cinematic Universe"
+  },
+  {
+    "id": "mcu-falcon-winter-soldier",
+    "title": "The Falcon and the Winter Soldier",
+    "originalTitle": "The Falcon and the Winter Soldier (2021)",
+    "year": 2021,
+    "director": "Malcolm Spellman & Kari Skogland",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Drama",
+      "Science fiction"
+    ],
+    "runtime": 50,
+    "poster": "https://upload.wikimedia.org/wikipedia/en/4/40/The_Falcon_and_the_Winter_Soldier_%22New_World_Order%22_poster.jpeg",
+    "movielensId": null,
+    "imdbId": "tt9233980",
+    "tmdbId": 88396,
+    "tags": [
+      "mcu",
+      "marvel",
+      "sam wilson",
+      "bucky barnes",
+      "captain america",
+      "shield",
+      "john walker",
+      "baron zemo"
+    ],
+    "ratingCount": 310,
+    "ratingMean": 4.3,
+    "source": "Marvel Cinematic Universe"
+  },
+  {
+    "id": "mcu-hawkeye",
+    "title": "Hawkeye",
+    "originalTitle": "Hawkeye (2021)",
+    "year": 2021,
+    "director": "Jonathan Igla & Rhys Thomas",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Crime"
+    ],
+    "runtime": 48,
+    "poster": "https://upload.wikimedia.org/wikipedia/en/8/83/Hawkeye_%22Never_Meet_Your_Heroes%22_poster.jpg",
+    "movielensId": null,
+    "imdbId": "tt10160804",
+    "tmdbId": 88329,
+    "tags": [
+      "mcu",
+      "marvel",
+      "clint barton",
+      "kate bishop",
+      "archery",
+      "new york",
+      "christmas",
+      "kingpin",
+      "yelena belova"
+    ],
+    "ratingCount": 320,
+    "ratingMean": 4.4,
+    "source": "Marvel Cinematic Universe"
+  },
+  {
+    "id": "mcu-moon-knight",
+    "title": "Moon Knight",
+    "originalTitle": "Moon Knight (2022)",
+    "year": 2022,
+    "director": "Jeremy Slater & Mohamed Diab",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Fantasy",
+      "Horror"
+    ],
+    "runtime": 48,
+    "poster": "https://upload.wikimedia.org/wikipedia/en/a/a5/Moon_Knight_%22Summon_the_Suit%22_poster.jpg",
+    "movielensId": null,
+    "imdbId": "tt10234724",
+    "tmdbId": 92749,
+    "tags": [
+      "mcu",
+      "marvel",
+      "oscar isaac",
+      "marc spector",
+      "steven grant",
+      "khonshu",
+      "egyptian mythology",
+      "mr knight"
+    ],
+    "ratingCount": 360,
+    "ratingMean": 4.6,
+    "source": "Marvel Cinematic Universe"
+  },
+  {
+    "id": "mcu-ms-marvel",
+    "title": "Ms. Marvel",
+    "originalTitle": "Ms. Marvel (2022)",
+    "year": 2022,
+    "director": "Bisha K. Ali / Adil & Bilall",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Comedy",
+      "Fantasy"
+    ],
+    "runtime": 45,
+    "poster": "https://upload.wikimedia.org/wikipedia/en/4/40/Ms._Marvel_%22No_Normal%22_poster.jpg",
+    "movielensId": null,
+    "imdbId": "tt10857164",
+    "tmdbId": 92782,
+    "tags": [
+      "mcu",
+      "marvel",
+      "kamala khan",
+      "jersey city",
+      "iman vellani",
+      "family",
+      "superhero origin"
+    ],
+    "ratingCount": 260,
+    "ratingMean": 4.2,
+    "source": "Marvel Cinematic Universe"
+  },
+  {
+    "id": "mcu-she-hulk",
+    "title": "She-Hulk: Attorney at Law",
+    "originalTitle": "She-Hulk: Attorney at Law (2022)",
+    "year": 2022,
+    "director": "Jessica Gao & Kat Coiro",
+    "genres": [
+      "Action",
+      "Comedy",
+      "Science fiction"
+    ],
+    "runtime": 35,
+    "poster": "https://upload.wikimedia.org/wikipedia/en/4/48/She-Hulk_Attorney_at_Law_%22A_Normal_Amount_of_Rage%22_poster.jpg",
+    "movielensId": null,
+    "imdbId": "tt10857160",
+    "tmdbId": 92783,
+    "tags": [
+      "mcu",
+      "marvel",
+      "jennifer walters",
+      "lawyer",
+      "tatiana maslany",
+      "fourth wall",
+      "daredevil cameo"
+    ],
+    "ratingCount": 270,
+    "ratingMean": 4.1,
+    "source": "Marvel Cinematic Universe"
+  },
+  {
+    "id": "mcu-secret-invasion",
+    "title": "Secret Invasion",
+    "originalTitle": "Secret Invasion (2023)",
+    "year": 2023,
+    "director": "Kyle Bradstreet & Ali Selim",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Drama",
+      "Science fiction"
+    ],
+    "runtime": 45,
+    "poster": "https://upload.wikimedia.org/wikipedia/en/2/2f/Secret_Invasion_%22Promises%22_poster.jpg",
+    "movielensId": null,
+    "imdbId": "tt13157618",
+    "tmdbId": 114472,
+    "tags": [
+      "mcu",
+      "marvel",
+      "nick fury",
+      "samuel l jackson",
+      "skrulls",
+      "espionage",
+      "shapeshifters"
+    ],
+    "ratingCount": 240,
+    "ratingMean": 3.8,
+    "source": "Marvel Cinematic Universe"
+  },
+  {
+    "id": "mcu-echo",
+    "title": "Echo",
+    "originalTitle": "Echo (2024)",
+    "year": 2024,
+    "director": "Marion Dayre & Sydney Freeland",
+    "genres": [
+      "Action",
+      "Crime",
+      "Drama"
+    ],
+    "runtime": 42,
+    "poster": "https://upload.wikimedia.org/wikipedia/en/9/9c/Echo_2023_poster.jpeg",
+    "movielensId": null,
+    "imdbId": "tt13966962",
+    "tmdbId": 138502,
+    "tags": [
+      "mcu",
+      "marvel",
+      "maya lopez",
+      "alaqua cox",
+      "kingpin",
+      "vincent donofrio",
+      "daredevil",
+      "gritty"
+    ],
+    "ratingCount": 230,
+    "ratingMean": 4.1,
+    "source": "Marvel Cinematic Universe"
+  },
+  {
+    "id": "mcu-agatha-all-along",
+    "title": "Agatha All Along",
+    "originalTitle": "Agatha All Along (2024)",
+    "year": 2024,
+    "director": "Jac Schaeffer",
+    "genres": [
+      "Comedy",
+      "Fantasy",
+      "Mystery",
+      "Science fiction"
+    ],
+    "runtime": 45,
+    "poster": "https://upload.wikimedia.org/wikipedia/en/9/95/Agatha_All_Along_%22Seekest_Thou_the_Road%22_poster.jpeg",
+    "movielensId": null,
+    "imdbId": "tt15594478",
+    "tmdbId": 138501,
+    "tags": [
+      "mcu",
+      "marvel",
+      "agatha harkness",
+      "kathryn hahn",
+      "witches road",
+      "coven",
+      "aubrey plaza"
+    ],
+    "ratingCount": 300,
+    "ratingMean": 4.5,
+    "source": "Marvel Cinematic Universe"
+  },
+  {
+    "id": "mcu-daredevil-series",
+    "title": "Daredevil (TV Series)",
+    "originalTitle": "Daredevil (2015)",
+    "year": 2015,
+    "director": "Drew Goddard",
+    "genres": [
+      "Action",
+      "Crime",
+      "Drama"
+    ],
+    "runtime": 54,
+    "poster": "https://upload.wikimedia.org/wikipedia/en/1/1b/Daredevil_season_1_poster.jpg",
+    "movielensId": null,
+    "imdbId": "tt3322312",
+    "tmdbId": 61889,
+    "tags": [
+      "marvel",
+      "mcu",
+      "matt murdock",
+      "charlie cox",
+      "kingpin",
+      "hallway fight",
+      "hells kitchen",
+      "gritty masterwork"
+    ],
+    "ratingCount": 480,
+    "ratingMean": 4.9,
+    "source": "Marvel Television"
+  },
+  {
+    "id": "mcu-the-punisher",
+    "title": "The Punisher (TV Series)",
+    "originalTitle": "The Punisher (2017)",
+    "year": 2017,
+    "director": "Steve Lightfoot",
+    "genres": [
+      "Action",
+      "Crime",
+      "Drama",
+      "Thriller"
+    ],
+    "runtime": 53,
+    "poster": "https://upload.wikimedia.org/wikipedia/en/2/21/The_Punisher_season_1_poster.jpg",
+    "movielensId": null,
+    "imdbId": "tt5675620",
+    "tmdbId": 67178,
+    "tags": [
+      "marvel",
+      "frank castle",
+      "jon bernthal",
+      "vigilante",
+      "military",
+      "revenge",
+      "gritty"
+    ],
+    "ratingCount": 410,
+    "ratingMean": 4.75,
+    "source": "Marvel Television"
+  },
+  {
+    "id": "mcu-jessica-jones",
+    "title": "Jessica Jones",
+    "originalTitle": "Jessica Jones (2015)",
+    "year": 2015,
+    "director": "Melissa Rosenberg",
+    "genres": [
+      "Action",
+      "Crime",
+      "Drama"
+    ],
+    "runtime": 52,
+    "poster": "https://upload.wikimedia.org/wikipedia/en/c/c1/Jessica_Jones_season_1_poster.jpg",
+    "movielensId": null,
+    "imdbId": "tt2357547",
+    "tmdbId": 38472,
+    "tags": [
+      "marvel",
+      "krysten ritter",
+      "kilgrave",
+      "david tennant",
+      "alias investigations",
+      "noir",
+      "psychological"
+    ],
+    "ratingCount": 370,
+    "ratingMean": 4.65,
+    "source": "Marvel Television"
+  },
+  {
+    "id": "mcu-luke-cage",
+    "title": "Luke Cage",
+    "originalTitle": "Luke Cage (2016)",
+    "year": 2016,
+    "director": "Cheo Hodari Coker",
+    "genres": [
+      "Action",
+      "Crime",
+      "Drama"
+    ],
+    "runtime": 55,
+    "poster": "https://upload.wikimedia.org/wikipedia/en/3/37/Luke_Cage_season_1_poster.jpeg",
+    "movielensId": null,
+    "imdbId": "tt3322314",
+    "tmdbId": 62126,
+    "tags": [
+      "marvel",
+      "mike colter",
+      "harlem",
+      "bulletproof",
+      "cottonmouth",
+      "mahershala ali"
+    ],
+    "ratingCount": 310,
+    "ratingMean": 4.4,
+    "source": "Marvel Television"
+  },
+  {
+    "id": "mcu-iron-fist",
+    "title": "Iron Fist",
+    "originalTitle": "Iron Fist (2017)",
+    "year": 2017,
+    "director": "Scott Buck",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Crime"
+    ],
+    "runtime": 55,
+    "poster": "https://upload.wikimedia.org/wikipedia/en/e/ef/Iron_Fist_season_1_poster.jpg",
+    "movielensId": null,
+    "imdbId": "tt3322310",
+    "tmdbId": 62127,
+    "tags": [
+      "marvel",
+      "danny rand",
+      "k un lun",
+      "martial arts",
+      "colleen wing",
+      "the hand"
+    ],
+    "ratingCount": 220,
+    "ratingMean": 3.6,
+    "source": "Marvel Television"
+  },
+  {
+    "id": "mcu-agents-of-shield",
+    "title": "Agents of S.H.I.E.L.D.",
+    "originalTitle": "Agents of S.H.I.E.L.D. (2013)",
+    "year": 2013,
+    "director": "Joss Whedon & Jed Whedon",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Drama",
+      "Science fiction"
+    ],
+    "runtime": 43,
+    "poster": "https://upload.wikimedia.org/wikipedia/en/5/53/Agents_of_S.H.I.E.L.D._season_1_poster.jpeg",
+    "movielensId": null,
+    "imdbId": "tt2364582",
+    "tmdbId": 1403,
+    "tags": [
+      "marvel",
+      "mcu",
+      "phil coulson",
+      "clark gregg",
+      "shield",
+      "hydra",
+      "daisy johnson"
+    ],
+    "ratingCount": 350,
+    "ratingMean": 4.5,
+    "source": "Marvel Television"
+  },
+  {
+    "id": "marvel-xmen-97",
+    "title": "X-Men '97",
+    "originalTitle": "X-Men '97 (2024)",
+    "year": 2024,
+    "director": "Beau DeMayo",
+    "genres": [
+      "Animation",
+      "Action",
+      "Adventure",
+      "Science fiction"
+    ],
+    "runtime": 32,
+    "poster": "https://upload.wikimedia.org/wikipedia/en/b/bf/X-Men_%2797_season_1_poster.jpg",
+    "movielensId": null,
+    "imdbId": "tt16159516",
+    "tmdbId": 138505,
+    "tags": [
+      "marvel",
+      "mutants",
+      "cyclops",
+      "magneto",
+      "storm",
+      "wolverine",
+      "animation masterwork",
+      "90s"
+    ],
+    "ratingCount": 390,
+    "ratingMean": 4.85,
+    "source": "Marvel Animation"
+  },
+  {
+    "id": "mcu-avengers-endgame",
+    "title": "Avengers: Endgame",
+    "originalTitle": "Avengers: Endgame (2019)",
+    "year": 2019,
+    "director": "Anthony and Joe Russo",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Drama",
+      "Science fiction"
+    ],
+    "runtime": 181,
+    "poster": "https://upload.wikimedia.org/wikipedia/en/0/0d/Avengers_Endgame_poster.jpg",
+    "movielensId": null,
+    "imdbId": "tt4154796",
+    "tmdbId": 299534,
+    "tags": [
+      "mcu",
+      "marvel",
+      "avengers",
+      "thanos",
+      "iron man",
+      "captain america",
+      "infinity stones",
+      "climax",
+      "time heist",
+      "portals"
+    ],
+    "ratingCount": 520,
+    "ratingMean": 4.85,
+    "source": "Curated Modern Cinema"
+  },
+  {
+    "id": "mcu-captain-marvel",
+    "title": "Captain Marvel",
+    "originalTitle": "Captain Marvel (2019)",
+    "year": 2019,
+    "director": "Anna Boden and Ryan Fleck",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Science fiction"
+    ],
+    "runtime": 124,
+    "poster": "https://upload.wikimedia.org/wikipedia/en/4/4e/Captain_Marvel_%28film%29_poster.jpg",
+    "movielensId": null,
+    "imdbId": "tt4154664",
+    "tmdbId": 299537,
+    "tags": [
+      "mcu",
+      "marvel",
+      "carol danvers",
+      "brie larson",
+      "skrulls",
+      "90s",
+      "space",
+      "nick fury"
+    ],
+    "ratingCount": 330,
+    "ratingMean": 4.25,
+    "source": "Curated Modern Cinema"
+  },
+  {
+    "id": "mcu-spiderman-far-from-home",
+    "title": "Spider-Man: Far From Home",
+    "originalTitle": "Spider-Man: Far From Home (2019)",
+    "year": 2019,
+    "director": "Jon Watts",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Comedy",
+      "Science fiction"
+    ],
+    "runtime": 129,
+    "poster": "https://upload.wikimedia.org/wikipedia/en/b/bd/Spider-Man_Far_From_Home_poster.jpg",
+    "movielensId": null,
+    "imdbId": "tt6320628",
+    "tmdbId": 429617,
+    "tags": [
+      "mcu",
+      "marvel",
+      "peter parker",
+      "tom holland",
+      "mysterio",
+      "jake gyllenhaal",
+      "europe trip",
+      "elementals"
+    ],
+    "ratingCount": 380,
+    "ratingMean": 4.5,
+    "source": "Curated Modern Cinema"
+  },
+  {
+    "id": "mcu-black-widow",
+    "title": "Black Widow",
+    "originalTitle": "Black Widow (2021)",
+    "year": 2021,
+    "director": "Cate Shortland",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Thriller"
+    ],
+    "runtime": 134,
+    "poster": "https://upload.wikimedia.org/wikipedia/en/e/e9/Black_Widow_%282021_film%29_poster.jpg",
+    "movielensId": null,
+    "imdbId": "tt3470600",
+    "tmdbId": 497698,
+    "tags": [
+      "mcu",
+      "marvel",
+      "natasha romanoff",
+      "scarlett johansson",
+      "yelena belova",
+      "red room",
+      "taskmaster"
+    ],
+    "ratingCount": 340,
+    "ratingMean": 4.3,
+    "source": "Curated Modern Cinema"
+  },
+  {
+    "id": "mcu-shang-chi",
+    "title": "Shang-Chi and the Legend of the Ten Rings",
+    "originalTitle": "Shang-Chi and the Legend of the Ten Rings (2021)",
+    "year": 2021,
+    "director": "Destin Daniel Cretton",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Fantasy"
+    ],
+    "runtime": 132,
+    "poster": "https://upload.wikimedia.org/wikipedia/en/7/74/Shang-Chi_and_the_Legend_of_the_Ten_Rings_poster.jpeg",
+    "movielensId": null,
+    "imdbId": "tt9376612",
+    "tmdbId": 566525,
+    "tags": [
+      "mcu",
+      "marvel",
+      "martial arts",
+      "ten rings",
+      "simu liu",
+      "tony leung",
+      "wenwu",
+      "ta lo",
+      "action"
+    ],
+    "ratingCount": 370,
+    "ratingMean": 4.6,
+    "source": "Curated Modern Cinema"
+  },
+  {
+    "id": "mcu-eternals",
+    "title": "Eternals",
+    "originalTitle": "Eternals (2021)",
+    "year": 2021,
+    "director": "Chloé Zhao",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Drama",
+      "Fantasy",
+      "Science fiction"
+    ],
+    "runtime": 156,
+    "poster": "https://upload.wikimedia.org/wikipedia/en/9/9b/Eternals_%28film%29_poster.jpeg",
+    "movielensId": null,
+    "imdbId": "tt9032400",
+    "tmdbId": 524434,
+    "tags": [
+      "mcu",
+      "marvel",
+      "celestials",
+      "chloe zhao",
+      "cosmic",
+      "immortals",
+      "ikaris",
+      "sersi"
+    ],
+    "ratingCount": 290,
+    "ratingMean": 4.1,
+    "source": "Curated Modern Cinema"
+  },
+  {
+    "id": "mcu-spiderman-no-way-home",
+    "title": "Spider-Man: No Way Home",
+    "originalTitle": "Spider-Man: No Way Home (2021)",
+    "year": 2021,
+    "director": "Jon Watts",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Fantasy",
+      "Science fiction"
+    ],
+    "runtime": 148,
+    "poster": "https://upload.wikimedia.org/wikipedia/en/0/00/Spider-Man_No_Way_Home_poster.jpg",
+    "movielensId": null,
+    "imdbId": "tt10872600",
+    "tmdbId": 634649,
+    "tags": [
+      "mcu",
+      "marvel",
+      "multiverse",
+      "tobey maguire",
+      "andrew garfield",
+      "tom holland",
+      "green goblin",
+      "doc ock",
+      "nostalgia"
+    ],
+    "ratingCount": 510,
+    "ratingMean": 4.85,
+    "source": "Curated Modern Cinema"
+  },
+  {
+    "id": "mcu-doctor-strange-mom",
+    "title": "Doctor Strange in the Multiverse of Madness",
+    "originalTitle": "Doctor Strange in the Multiverse of Madness (2022)",
+    "year": 2022,
+    "director": "Sam Raimi",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Fantasy",
+      "Horror",
+      "Science fiction"
+    ],
+    "runtime": 126,
+    "poster": "https://upload.wikimedia.org/wikipedia/en/1/17/Doctor_Strange_in_the_Multiverse_of_Madness_poster.jpg",
+    "movielensId": null,
+    "imdbId": "tt9419884",
+    "tmdbId": 453395,
+    "tags": [
+      "mcu",
+      "marvel",
+      "sam raimi",
+      "scarlet witch",
+      "benedict cumberbatch",
+      "multiverse",
+      "darkhold",
+      "illuminati"
+    ],
+    "ratingCount": 380,
+    "ratingMean": 4.4,
+    "source": "Curated Modern Cinema"
+  },
+  {
+    "id": "mcu-thor-love-and-thunder",
+    "title": "Thor: Love and Thunder",
+    "originalTitle": "Thor: Love and Thunder (2022)",
+    "year": 2022,
+    "director": "Taika Waititi",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Comedy",
+      "Fantasy",
+      "Science fiction"
+    ],
+    "runtime": 119,
+    "poster": "https://upload.wikimedia.org/wikipedia/en/8/88/Thor_Love_and_Thunder_poster.jpeg",
+    "movielensId": null,
+    "imdbId": "tt10648342",
+    "tmdbId": 616037,
+    "tags": [
+      "mcu",
+      "marvel",
+      "chris hemsworth",
+      "christian bale",
+      "gorr",
+      "natalie portman",
+      "mighty thor"
+    ],
+    "ratingCount": 310,
+    "ratingMean": 4.15,
+    "source": "Curated Modern Cinema"
+  },
+  {
+    "id": "mcu-wakanda-forever",
+    "title": "Black Panther: Wakanda Forever",
+    "originalTitle": "Black Panther: Wakanda Forever (2022)",
+    "year": 2022,
+    "director": "Ryan Coogler",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Drama",
+      "Science fiction"
+    ],
+    "runtime": 161,
+    "poster": "https://upload.wikimedia.org/wikipedia/en/3/3b/Black_Panther_Wakanda_Forever_poster.jpg",
+    "movielensId": null,
+    "imdbId": "tt9114286",
+    "tmdbId": 505642,
+    "tags": [
+      "mcu",
+      "marvel",
+      "wakanda",
+      "namor",
+      "talokan",
+      "chadwick boseman tribute",
+      "shuri"
+    ],
+    "ratingCount": 370,
+    "ratingMean": 4.5,
+    "source": "Curated Modern Cinema"
+  },
+  {
+    "id": "mcu-ant-man-quantumania",
+    "title": "Ant-Man and the Wasp: Quantumania",
+    "originalTitle": "Ant-Man and the Wasp: Quantumania (2023)",
+    "year": 2023,
+    "director": "Peyton Reed",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Comedy",
+      "Science fiction"
+    ],
+    "runtime": 124,
+    "poster": "https://upload.wikimedia.org/wikipedia/en/3/30/Ant-Man_and_the_Wasp_Quantumania_poster.jpg",
+    "movielensId": null,
+    "imdbId": "tt10954600",
+    "tmdbId": 640146,
+    "tags": [
+      "mcu",
+      "marvel",
+      "quantum realm",
+      "kang the conqueror",
+      "paul rudd",
+      "jonathan majors"
+    ],
+    "ratingCount": 290,
+    "ratingMean": 3.9,
+    "source": "Curated Modern Cinema"
+  },
+  {
+    "id": "mcu-guardians-vol-3",
+    "title": "Guardians of the Galaxy Vol. 3",
+    "originalTitle": "Guardians of the Galaxy Vol. 3 (2023)",
+    "year": 2023,
+    "director": "James Gunn",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Comedy",
+      "Science fiction"
+    ],
+    "runtime": 150,
+    "poster": "https://upload.wikimedia.org/wikipedia/en/7/74/Guardians_of_the_Galaxy_Vol._3_poster.jpg",
+    "movielensId": null,
+    "imdbId": "tt6791350",
+    "tmdbId": 447365,
+    "tags": [
+      "mcu",
+      "marvel",
+      "james gunn",
+      "rocket raccoon",
+      "star lord",
+      "emotional",
+      "high evolutionary",
+      "goodbye trilogy"
+    ],
+    "ratingCount": 460,
+    "ratingMean": 4.8,
+    "source": "Curated Modern Cinema"
+  },
+  {
+    "id": "mcu-the-marvels",
+    "title": "The Marvels",
+    "originalTitle": "The Marvels (2023)",
+    "year": 2023,
+    "director": "Nia DaCosta",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Comedy",
+      "Science fiction"
+    ],
+    "runtime": 105,
+    "poster": "https://upload.wikimedia.org/wikipedia/en/7/7a/The_Marvels_poster.jpg",
+    "movielensId": null,
+    "imdbId": "tt10676048",
+    "tmdbId": 609681,
+    "tags": [
+      "mcu",
+      "marvel",
+      "brie larson",
+      "iman vellani",
+      "teyonah parris",
+      "cosmic",
+      "teamup"
+    ],
+    "ratingCount": 250,
+    "ratingMean": 4,
+    "source": "Curated Modern Cinema"
+  },
+  {
+    "id": "mcu-deadpool-wolverine",
+    "title": "Deadpool & Wolverine",
+    "originalTitle": "Deadpool & Wolverine (2024)",
+    "year": 2024,
+    "director": "Shawn Levy",
+    "genres": [
+      "Action",
+      "Comedy",
+      "Science fiction"
+    ],
+    "runtime": 128,
+    "poster": "https://upload.wikimedia.org/wikipedia/en/4/4c/Deadpool_%26_Wolverine_poster.jpg",
+    "movielensId": null,
+    "imdbId": "tt6263850",
+    "tmdbId": 533535,
+    "tags": [
+      "mcu",
+      "marvel",
+      "ryan reynolds",
+      "hugh jackman",
+      "wolverine",
+      "deadpool",
+      "multiverse",
+      "tva",
+      "cameos",
+      "r-rated"
+    ],
+    "ratingCount": 490,
+    "ratingMean": 4.8,
+    "source": "Curated Modern Cinema"
+  },
+  {
+    "id": "marvel-spider-verse",
+    "title": "Spider-Man: Into the Spider-Verse",
+    "originalTitle": "Spider-Man: Into the Spider-Verse (2018)",
+    "year": 2018,
+    "director": "Bob Persichetti, Peter Ramsey & Rodney Rothman",
+    "genres": [
+      "Animation",
+      "Action",
+      "Adventure",
+      "Science fiction"
+    ],
+    "runtime": 117,
+    "poster": "https://upload.wikimedia.org/wikipedia/en/f/fa/Spider-Man_Into_the_Spider-Verse_poster.png",
+    "movielensId": null,
+    "imdbId": "tt4633694",
+    "tmdbId": 324857,
+    "tags": [
+      "marvel",
+      "miles morales",
+      "spider-man",
+      "oscar winner",
+      "groundbreaking animation",
+      "multiverse",
+      "gwen stacy"
+    ],
+    "ratingCount": 480,
+    "ratingMean": 4.9,
+    "source": "Curated Modern Cinema"
+  },
+  {
+    "id": "marvel-across-spider-verse",
+    "title": "Spider-Man: Across the Spider-Verse",
+    "originalTitle": "Spider-Man: Across the Spider-Verse (2023)",
+    "year": 2023,
+    "director": "Joaquim Dos Santos, Kemp Powers & Justin K. Thompson",
+    "genres": [
+      "Animation",
+      "Action",
+      "Adventure",
+      "Science fiction"
+    ],
+    "runtime": 140,
+    "poster": "https://upload.wikimedia.org/wikipedia/en/b/b4/Spider-Man-_Across_the_Spider-Verse_poster.jpg",
+    "movielensId": null,
+    "imdbId": "tt9362722",
+    "tmdbId": 569094,
+    "tags": [
+      "marvel",
+      "miles morales",
+      "spider-man",
+      "miguel o hara",
+      "spider-punk",
+      "canon events",
+      "multiverse",
+      "visual masterpiece"
+    ],
+    "ratingCount": 490,
+    "ratingMean": 4.95,
+    "source": "Curated Modern Cinema"
+  },
+
   {
     id: 'uncut-gems',
     title: 'Uncut Gems',
@@ -1541,7 +2763,7 @@ export async function runImport() {
 
   // Update source metadata
   const source = JSON.parse(fs.readFileSync(sourcePath, 'utf8'));
-  source.version = '2018-09-26-posters-v5';
+  source.version = '2018-09-26-marvel-v6';
   source.movieCount = updatedMovies.length;
   source.bollywoodCount = BOLLYWOOD_MOVIES.length;
   fs.writeFileSync(sourcePath, JSON.stringify(source, null, 2), 'utf8');
