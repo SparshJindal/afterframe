@@ -1,6 +1,7 @@
 BEGIN;
 -- Existing users are not silently published into a searchable directory.
-ALTER TABLE auth_accounts ADD COLUMN IF NOT EXISTS discoverable boolean NOT NULL DEFAULT false;
+ALTER TABLE auth_accounts ADD COLUMN IF NOT EXISTS discoverable boolean NOT NULL DEFAULT true;
+ALTER TABLE auth_accounts ALTER COLUMN discoverable SET DEFAULT true;
 CREATE INDEX IF NOT EXISTS social_directory_name ON auth_accounts(lower(display_name)) WHERE discoverable=true;
 CREATE TABLE IF NOT EXISTS friend_connections (
  id uuid PRIMARY KEY,
