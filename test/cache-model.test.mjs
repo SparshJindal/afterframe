@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {fileURLToPath} from 'node:url';
 import {createRecommender,journalFingerprint} from '../server/recommendations.mjs';
 function mockPool(movies) {
  const shelves=new Map();let filmCalls=0;
@@ -13,7 +14,7 @@ function mockPool(movies) {
  }};
 }
 const movies=Array.from({length:20},(_,i)=>({id:'m'+i,title:'Film '+i,genres:[i<10?'Drama':'Comedy'],ratingMean:4,ratingCount:40}));
-const root=new URL('../',import.meta.url).pathname;
+const root=fileURLToPath(new URL('../',import.meta.url));
 const prior=async()=>({coefficients:Array(7).fill(.12),source:'conservative-default'});
 test('concurrent recommendation reads share model/catalogue work; revisions invalidate cache',async()=>{let reads=0;const pool=mockPool(movies);const rec=await createRecommender({pool,root,movieSelect:'movies',getRatings:async()=>{reads++;return []},populationPrior:prior});const [a,b]=await Promise.all([rec.profile('owner'),rec.profile('owner')]);assert.equal(pool.filmCalls,1);assert.equal(reads,1);assert.deepEqual(a.public,b.public);await rec.profile('owner');assert.equal(reads,1);rec.invalidate();await rec.profile('owner');assert.equal(pool.filmCalls,2);assert.equal(reads,2);});
 test('a movie log invalidates a warm cache in a different worker immediately',async()=>{const pool=mockPool(movies);let ratings=[{movieId:'m0',overall:5,createdAt:'2026-01-01',answers:[]}];const args={pool,root,movieSelect:'movies',getRatings:async()=>structuredClone(ratings),populationPrior:prior};const first=await createRecommender(args),second=await createRecommender(args);const before=(await second.profile('owner')).public.hybridRecommendations.map(r=>r.movieId);ratings.push({movieId:'m10',overall:5,createdAt:'2026-01-02',answers:[]});await first.touch('owner');const after=(await second.profile('owner')).public.hybridRecommendations;assert.notDeepEqual(after.map(r=>r.movieId),before);assert.equal(after.some(r=>r.movieId==='m10'),false);assert.ok(after.some(r=>r.sourceMovieId==='m10'));});
