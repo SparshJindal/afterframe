@@ -85,6 +85,8 @@ export async function ensureInit() {
         if (runMigrations) throw err;
       }
       await p.query('SELECT day FROM llm_daily_budget LIMIT 0');
+      if(runMigrations)await p.query(await fs.readFile(path.join(root,'db/recommendation-schema.sql'),'utf8'));
+      await p.query('SELECT profile_id FROM recommendation_shelves LIMIT 0');
       recommender=await createRecommender({pool:p,root,movieSelect,getRatings,populationPrior});
       discovery=createDiscovery({pool:p,auth,recommender});
       try {
@@ -357,6 +359,7 @@ export async function handleRequest(req, res) {
             for (const a of b.answers) await c.query('INSERT INTO answers(rating_id,question_version,aspect_id,score,skip_reason,note) VALUES($1,1,$2,$3,$4,$5)', [targetRid, a.aspectId, a.score, a.skipReason || null, a.note]);
           }
           await c.query('DELETE FROM watchlist WHERE profile_id=$1 AND movie_id=$2', [id, b.movieId]);
+          await recommender.touch(id,c);
           await c.query('COMMIT');
         } catch (e) {
           await c.query('ROLLBACK');
@@ -371,6 +374,7 @@ export async function handleRequest(req, res) {
         const rid = url.pathname.split('/').pop();
         if (!/^[\da-f-]{36}$/.test(rid)) return send(res, 400, { error: 'Invalid rating ID.' });
         const r = await p.query('DELETE FROM ratings WHERE id=$1 AND profile_id=$2 RETURNING id', [rid, id]);
+        if(r.rowCount)await recommender.touch(id);
         return send(res, r.rowCount ? 200 : 404, r.rowCount ? { ok: true } : { error: 'Rating not found.' });
       }
 
@@ -391,6 +395,7 @@ export async function handleRequest(req, res) {
         if (!m.rowCount) throw Error('Film not found.');
         if (b.saved) await p.query('INSERT INTO watchlist(profile_id,movie_id) VALUES($1,$2) ON CONFLICT DO NOTHING', [id, b.movieId]);
         else await p.query('DELETE FROM watchlist WHERE profile_id=$1 AND movie_id=$2', [id, b.movieId]);
+        await recommender.touch(id);
         return send(res, 200, { ok: true });
       }
 
@@ -399,6 +404,24 @@ export async function handleRequest(req, res) {
         if (typeof b.contribute !== 'boolean') throw Error('Contribution must be true or false.');
         await p.query('UPDATE profiles SET contribute=$1 WHERE id=$2', [b.contribute, id]);
         return send(res, 200, { ok: true });
+      }
+
+      if(req.method==='POST'&&url.pathname==='/api/recommendations/refresh'){
+        const b=await body(req);if(!b||typeof b!=='object'||Array.isArray(b)||Object.keys(b).length)return send(res,400,{error:'Send an empty object.'});
+        await auth.limits(req,'recommendation_refresh',id,90,30,900);
+        return send(res,200,await recommender.refresh(id));
+      }
+      if(req.method==='POST'&&url.pathname==='/api/recommendations/feedback'){
+        const b=await body(req);
+        if(!b||Array.isArray(b)||Object.keys(b).some(k=>!['movieId','dismissed'].includes(k))||typeof b.movieId!=='string'||b.movieId.length>100||typeof b.dismissed!=='boolean')return send(res,400,{error:'Choose a movie and a true/false dismissal.'});
+        if(!(await p.query('SELECT id FROM movies WHERE id=$1',[b.movieId])).rowCount)return send(res,404,{error:'Movie unavailable.'});
+        await auth.limits(req,'recommendation_feedback',id,180,90,900);
+        return send(res,200,await recommender.feedback(id,b.movieId,b.dismissed));
+      }
+      if(req.method==='GET'&&url.pathname==='/api/recommendations/hidden'){
+        const raw=url.searchParams.get('offset')||'0';if(!/^\d{1,5}$/.test(raw)||Number(raw)>10000)return send(res,400,{error:'Invalid page offset.'});
+        const r=await p.query('SELECT m.id,m.title,m.year FROM recommendation_feedback f JOIN movies m ON m.id=f.movie_id WHERE f.profile_id=$1 ORDER BY f.created_at DESC,f.movie_id LIMIT 21 OFFSET $2',[id,Number(raw)]);
+        return send(res,200,{movies:r.rows.slice(0,20),nextOffset:r.rows.length>20?Number(raw)+20:null});
       }
 
       if(req.method==='GET'&&url.pathname==='/api/taste'){const t=await recommender.profile(id);return send(res,200,{...t.public,catalogue:catalogueMeta});}

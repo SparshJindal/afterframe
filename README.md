@@ -20,6 +20,7 @@ Node 22+ (24 preferred), PostgreSQL. Install dependencies with `npm ci`.
 - Development: `npm run dev` starts an embedded local PostgreSQL database and the app on loopback. On minimal Linux, the embedded package may require its native library directory in LD_LIBRARY_PATH; using an installed PostgreSQL or Docker is an alternative.
 - Existing DB: set DATABASE_URL, APP_ORIGIN and PORT, then `npm start`. Copy `.env.example` values into your environment/secret manager; this app does not automatically load a .env file when run directly with Node.
 - Production: HTTPS APP_ORIGIN, a random AUTH_SECRET, verified sender MAIL_FROM and real RESEND_API_KEY are required. See [docs/LOCAL-AND-PRODUCTION.md](docs/LOCAL-AND-PRODUCTION.md) and [docs/AUTH-ARCHITECTURE.md](docs/AUTH-ARCHITECTURE.md). Use a controlled migration role, not runtime DDL.
+- Recommendation freshness fix: see [docs/RECOMMENDATION-REFRESH.md](docs/RECOMMENDATION-REFRESH.md). Apply `db/recommendation-schema.sql` before deploying algorithm v4 and its More picks / Not for me controls.
 - Friends feature: see [docs/SOCIAL-FEATURE.md](docs/SOCIAL-FEATURE.md). Run `db/social-schema.sql` with your production migration role before deploying. Directory visibility and sharing are opt-in.
 - Upgrading v1.2: run `db/discovery-schema.sql` with your migration role before restarting. Existing accounts/reviews remain intact. No fabricated users or reviews are seeded.
 
